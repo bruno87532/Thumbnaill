@@ -13,17 +13,16 @@ import { GoogleGenAI } from "@google/genai";
         const project = configService.get<string>("GOOGLE_CLOUD_PROJECT")
         const location = configService.get<string>("GOOGLE_CLOUD_LOCATION")
         const vertexai = configService.get<string>("GOOGLE_GENAI_USE_VERTEXAI") === "True"
-
         const ai = new GoogleGenAI({
           vertexai,
           project,
-          location
+          location,
         })
 
         return ai
       }
     }
   ],
-  exports: [GoogleGenAI]
+  exports: [GenaiProvider],
 })
 export class GenaiModule { }

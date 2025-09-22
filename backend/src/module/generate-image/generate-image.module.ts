@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
 import { GenerateImageService } from "./generate-image.service";
-import { GenerateImageController } from "./generate-image.controller";
+import { GenaiModule } from "./provider/genai/genai.module";
 
 @Module({
-  controllers: [GenerateImageController],
+  imports: [GenaiModule],
   exports: [GenerateImageService],
   providers: [GenerateImageService],
 })

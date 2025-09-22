@@ -1,5 +1,5 @@
 import { Injectable, Inject, InternalServerErrorException, HttpException, NotFoundException } from "@nestjs/common";
-import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
+import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold, Content } from "@google/genai";
 import { GenerateImageProviderAbstract } from "../../abstract/generate-image-provider.abstract";
 import * as fs from "fs";
 
@@ -9,16 +9,40 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
     @Inject("GOOGLE_CLIENT") private readonly googleClient: GoogleGenAI,
   ) { }
 
-  async createImage(prompt: string) {
+  async createImage(
+    prompt: string,
+    categories: {
+      category: HarmCategory,
+      threshold: HarmBlockThreshold
+    }[],
+    inlineData: {
+      mimeType: "image/png" | "image/jpeg" | "image/webp",
+      data: string
+    }[]
+  ) {
     try {
       const response = await this.googleClient.models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents: [
           {
             role: "user",
-            parts: [{ text: prompt }],
+            parts: [
+              { text: prompt },
+              ...inlineData.map((img) => ({
+                inlineData: {
+                  mimeType: img.mimeType,
+                  data: img.data
+                }
+              }))
+            ],
           },
-        ],
+        ] as Content, 
+        config: {
+          responseModalities: ["IMAGE", "TEXT"],
+          safetySettings: [
+            ...categories
+          ]
+        }
       });
 
       const candidate = response.candidates?.[0];
@@ -29,7 +53,9 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
 
       for (const part of content.parts) {
         if (part.text) {
+          console.log(part.text)
         } else if (part.inlineData?.data) {
+          console.log("salvando")
           const imageData = part.inlineData.data;
           const buffer = Buffer.from(imageData, "base64");
           const fileName = `gemini-naativea-image.png`;

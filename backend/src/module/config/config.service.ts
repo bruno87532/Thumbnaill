@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateConfigDto } from "./dto/update-config.dto";
 
@@ -32,6 +32,22 @@ export class ConfigService {
     } catch (error) {
       console.error("An error ocurred while updating config with idUser", idUser, error)
       throw new InternalServerErrorException("An error ocurred while updating config with idUser")
+    }
+  }
+
+  async getConfigByIdUser(idUser: string) {
+    try {
+      const config = await this.prismaService.config.findUnique({
+        where: { idUser }
+      })
+
+
+      if (!config) throw new NotFoundException("Configs not found")
+
+      return config
+    } catch (error) { 
+      console.error("An error ocurred while fetching config with idUser", idUser, error)
+      throw new InternalServerErrorException("An error ocurred while fetching config with idUser")
     }
   }
 }

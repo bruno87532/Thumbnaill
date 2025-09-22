@@ -4,7 +4,6 @@ Take the user's raw input prompt and rewrite it into a more descriptive, accurat
 Rules:
 Keep the original subject and intent intact.
 Expand with visual details: colors, materials, textures, environment, lighting, atmosphere, emotions.
-Add stylistic or artistic descriptions (e.g., realistic, surreal, minimalist, cinematic, painterly, fantasy, modern design, etc.).
 Use clear and vivid language rather than vague terms.
 Always return only the refined prompt, without explanations or comments.
 
