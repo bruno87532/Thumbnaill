@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum config {
+  BLOCK_LOW_AND_ABOVE
+  BLOCK_MEDIUM_AND_ABOVE
+  BLOCK_NONE
+  BLOCK_ONLY_HIGH
+  HARM_BLOCK_THRESHOLD_UNSPECIFIED
+  OFF
+}
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  image    Image[]
+  config   Config?
+}
+
+model Image {
+  id     String @id
+  idUser String
+  user   User   @relation(fields: [idUser], references: [id])
+}
+
+model Config {
+  id                     String @id @default(uuid())
+  civicIntegrity         config @default(OFF)
+  dangerousContent       config @default(OFF)
+  harassmentIntimidation config @default(OFF)
+  hateSpeech             config @default(OFF)
+  sexual                 config @default(OFF)
+  idUser                 String @unique
+  user                   User   @relation(fields: [idUser], references: [id])
+}
