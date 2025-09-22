@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, ImageIcon, Settings, Sparkles, TrendingUp, Clock, Star } from "lucide-react"
 import { Settings as SettingsComponent } from "./components/settings/settings"
+import { Thumbnaill } from "./components/history/history"
 
 function DashboardHome() {
   return (
@@ -169,21 +170,7 @@ export default function ThumbnailDashboard() {
       case "gallery":
         return <Gallery />
       case "history":
-        return (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Histórico</h1>
-            <p className="text-muted-foreground">Suas thumbnails geradas anteriormente</p>
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="font-semibold mb-2">Em breve</h3>
-                <p className="text-muted-foreground text-center">
-                  O histórico de thumbnails estará disponível em breve
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )
+        return <Thumbnaill />
       case "settings":
         return <SettingsComponent />
       case "profile":

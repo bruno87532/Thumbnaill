@@ -17,11 +17,12 @@ enum config {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  password String
-  image    Image[]
-  config   Config?
+  id         String       @id @default(uuid())
+  email      String       @unique
+  password   String
+  image      Image[]
+  config     Config?
+  thumbnaill Thumbnaill[]
 }
 
 model Image {
@@ -39,4 +40,10 @@ model Config {
   sexual                 config @default(OFF)
   idUser                 String @unique
   user                   User   @relation(fields: [idUser], references: [id])
+}
+
+model Thumbnaill {
+  id     String @id
+  idUser String?
+  User   User?   @relation(fields: [idUser], references: [id])
 }

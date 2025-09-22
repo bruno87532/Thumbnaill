@@ -19,7 +19,9 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
     }[]
-  ) {
+  ): Promise<{
+    data: Buffer<ArrayBuffer>
+  } | undefined> {
     try {
       const response = await this.googleClient.models.generateContent({
         model: "gemini-2.5-flash-image-preview",
@@ -36,7 +38,7 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
               }))
             ],
           },
-        ] as Content, 
+        ] as Content,
         config: {
           responseModalities: ["IMAGE", "TEXT"],
           safetySettings: [
@@ -53,13 +55,13 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
 
       for (const part of content.parts) {
         if (part.text) {
-          console.log(part.text)
         } else if (part.inlineData?.data) {
-          console.log("salvando")
           const imageData = part.inlineData.data;
           const buffer = Buffer.from(imageData, "base64");
-          const fileName = `gemini-naativea-image.png`;
-          fs.writeFileSync(fileName, buffer);
+
+          return {
+            data: buffer
+          }
         }
       }
     } catch (error) {

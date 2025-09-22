@@ -1,11 +1,14 @@
 import { ImageProvider } from "./context/use-image"
+import { ThumbnaillProvider } from "./context/use-thumbnaill"
 
 const DashboardLayout: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
     <ImageProvider>
-      {children}
+      <ThumbnaillProvider>
+        {children}
+      </ThumbnaillProvider>
     </ImageProvider>
   )
 }

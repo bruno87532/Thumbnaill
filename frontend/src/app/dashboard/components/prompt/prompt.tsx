@@ -7,24 +7,52 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Check } from "lucide-react"
 import { useImage } from "../../context/use-image"
+import { SettingsSchema, type SettingsSchemaType } from "./schema/settings.schema"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { FormControl, FormField, FormItem, FormMessage, Form } from "@/components/ui/form"
+import { ThumbnaillService } from "@/services/thumbnaill.service"
+import { Loader2 } from "lucide-react"
 
 export const Prompt = () => {
-  const [prompt, setPrompt] = useState("")
+  const form = useForm<SettingsSchemaType>({
+    resolver: zodResolver(SettingsSchema),
+    defaultValues: {
+      prompt: "",
+    },
+  })
+
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [generatedThumbnail, setGeneratedThumbnail] = useState<Uint8Array | null>(null)
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const { urlImages } = useImage()
 
   const toggleImageSelection = (imageId: string) => {
     setSelectedImages((prev) => (prev.includes(imageId) ? prev.filter((id) => id !== imageId) : [...prev, imageId]))
   }
 
-  const handleSubmit = async () => {
-    if (!prompt.trim()) return
-
+  const handleSubmit = async (data: SettingsSchemaType) => {
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const result = await ThumbnaillService.createThumbnaill({
+        ids: selectedImages,
+        prompt: data.prompt,
+      })
 
-    setIsLoading(false)
+      if (result && result.data) {
+        const uint8 = new Uint8Array(result.data)
+        setGeneratedThumbnail(uint8)
+        // Convert buffer to blob URL for display
+        const blob = new Blob([uint8], { type: "image/png" })
+        const url = URL.createObjectURL(blob)
+        setThumbnailUrl(url)
+      }
+    } catch (error) {
+      console.error("Erro ao gerar thumbnail:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -35,12 +63,26 @@ export const Prompt = () => {
           <CardDescription>Descreva detalhadamente a thumbnail que você deseja criar</CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ex: Crie uma thumbnail épica para vídeo de gaming com um personagem em ação, efeitos de fogo, texto 'ÉPICO' em destaque, cores vibrantes azul e laranja..."
-            className="min-h-[120px] text-base"
-          />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} id="prompt-form">
+              <FormField
+                control={form.control}
+                name="prompt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Crie uma thumbnail épica para vídeo de gaming com um personagem em ação, efeitos de fogo, texto 'ÉPICO' em destaque, cores vibrantes azul e laranja..."
+                        className="min-h-[120px] text-base"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
@@ -62,7 +104,11 @@ export const Prompt = () => {
                 onClick={() => toggleImageSelection(image.id)}
               >
                 <div className="aspect-square overflow-hidden rounded-md">
-                  <img src={image.url || "/placeholder.svg"} alt="Imagem salva" className="w-full h-full object-cover" />
+                  <img
+                    src={image.url || "/placeholder.svg"}
+                    alt="Imagem salva"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 {selectedImages.includes(image.id) && (
                   <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
@@ -81,9 +127,47 @@ export const Prompt = () => {
         </CardContent>
       </Card>
 
+      {thumbnailUrl && (
+        <Card className="gradient-card">
+          <CardHeader>
+            <CardTitle className="text-primary">Thumbnail Gerada</CardTitle>
+            <CardDescription>Sua thumbnail foi gerada com sucesso</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center">
+              <div className="relative max-w-md w-full">
+                <img
+                  src={thumbnailUrl || "/placeholder.svg"}
+                  alt="Thumbnail gerada"
+                  className="w-full h-auto rounded-lg border-2 border-primary/20 shadow-lg"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const link = document.createElement("a")
+                  link.href = thumbnailUrl
+                  link.download = "thumbnail-gerada.png cursor-pointer"
+                  link.click()
+                }}
+              >
+                Download
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-end">
-        <Button onClick={handleSubmit} disabled={!prompt.trim() || isLoading} className="min-w-[140px]">
-          {isLoading ? "Enviando..." : "Enviar Requisição"}
+        <Button
+          disabled={isLoading}
+          className="min-w-[140px] cursor-pointer"
+          type="submit"
+          form="prompt-form"
+        >
+          {isLoading ? "Gerando..." : "Gerar Thumbnail"}
         </Button>
       </div>
     </div>

@@ -1,33 +1,29 @@
-import { BadRequestException, ForbiddenException, HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { ConfigService } from "@nestjs/config";
+import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { v4 as uuid } from "uuid";
-import { Readable } from "stream";
+import { S3Service } from "../s3/s3.service";
 
 @Injectable()
 export class ImageService {
   constructor(
-    @Inject("s3Client") private readonly s3Client: S3Client,
-    private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
+    private readonly s3Service: S3Service
   ) { }
 
   async createImage(idUser: string, files: Express.Multer.File[]) {
     if (files.length === 0) throw new BadRequestException("File is required")
-    const amazonBucket = this.configService.get<string>("AMAZON_BUCKET") ?? ""
 
     const images = await Promise.all(
       files.map(async (file) => {
         const key = `${idUser}-${uuid()}`
         const uploadParams = {
-          Bucket: amazonBucket,
           Key: key,
           Body: file.buffer,
           ContentType: file.mimetype
         }
 
-        await this.s3Client.send(new PutObjectCommand(uploadParams))
+        await this.s3Service.saveImage(uploadParams)
+
         const image = await this.prismaService.image.create({
           data: {
             id: key,
@@ -44,26 +40,15 @@ export class ImageService {
 
   async getImagesByIdUser(idUser: string) {
     try {
-      const amazonBucket = this.configService.get<string>("AMAZON_BUCKET") ?? ""
-
       const images = await this.prismaService.image.findMany({
         where: { idUser }
       })
 
       const imagesFile = await Promise.all(
         images.map(async (image) => {
-          const command = new GetObjectCommand({
-            Bucket: amazonBucket,
+          const chunks = await this.s3Service.getImage({
             Key: image.id
           })
-
-          const response = await this.s3Client.send(command)
-          if (!response.Body) throw new BadRequestException("Body is required")
-          const stream = response.Body as Readable;
-          const chunks: Buffer[] = []
-          for await (const chunk of stream) {
-            chunks.push(chunk)
-          }
 
           return {
             id: image.id,
@@ -96,7 +81,6 @@ export class ImageService {
 
   async getImagesByIds(ids: string[]) {
     try {
-      const amazonBucket = this.configService.get<string>("AMAZON_BUCKET") ?? ""
       const images = await this.prismaService.image.findMany({
         where: {
           id: {
@@ -109,18 +93,9 @@ export class ImageService {
 
       const imagesFile = await Promise.all(
         images.map(async (image) => {
-          const command = new GetObjectCommand({
-            Bucket: amazonBucket,
+          const chunks = await this.s3Service.getImage({
             Key: image.id
           })
-
-          const response = await this.s3Client.send(command)
-          if (!response.Body) throw new BadRequestException("Body is required")
-          const stream = response.Body as Readable;
-          const chunks: Buffer[] = []
-          for await (const chunk of stream) {
-            chunks.push(chunk)
-          }
 
           return {
             id: image.id,
@@ -128,7 +103,7 @@ export class ImageService {
           }
         })
       )
-      
+
       return imagesFile
     } catch (error) {
       console.error("An error ocurred while fetching images with ids", error)
@@ -138,16 +113,12 @@ export class ImageService {
 
   async deleteImageById(idUser: string, id: string) {
     try {
-      const amazonBucket = this.configService.get<string>("AMAZON_BUCKET") ?? ""
       const image = await this.getImageById(id)
       if (image.idUser !== idUser) throw new ForbiddenException("Access denied for this resource")
 
-      await this.s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: amazonBucket,
-          Key: image.id
-        })
-      )
+      await this.s3Service.deleteImage({
+        Key: image.id
+      })
 
       const imageDeleted = await this.prismaService.image.delete({
         where: { id }
