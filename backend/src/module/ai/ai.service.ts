@@ -19,7 +19,6 @@ export class AiService {
     additionalAfterMessages?: interfaceMessages[],
   ): Promise<{
     content: string;
-    cost: number;
   }> {
     const loadedTemplate = ChatPromptTemplate.fromTemplate(templateString)
     const formattedTemplate = await loadedTemplate.format({ ...inputVariables })
@@ -32,6 +31,21 @@ export class AiService {
       message,
       options
     );
+  }
+
+  async chatCompletionWithImage(
+    templateString: string,
+    imageUrl: string,
+    options?: {
+      model: "gpt-4o-mini" | "gpt-4o";
+      temperature?: number;
+    }
+  ): Promise<{
+    content: string;
+  }> {
+    const loadedTemplate = ChatPromptTemplate.fromTemplate(templateString)
+    const formattedTemplate = await loadedTemplate.format({ })
+    return await this.providerService.chatCompletionWithImage(formattedTemplate, imageUrl, options)
   }
 
   private async toLangChainMessage(msg: {

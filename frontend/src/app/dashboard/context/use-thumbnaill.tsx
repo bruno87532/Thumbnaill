@@ -4,13 +4,15 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { ThumbnaillService } from "@/services/thumbnaill.service"
 
 type UrlThumbnaill = {
-  url: string,
-  id: string
+  url: string;
+  id: string;
 }
 
 type ThumbnaillContext = {
-  urlThumbnaills: UrlThumbnaill[]
-  setUrlThumbnaills: React.Dispatch<React.SetStateAction<UrlThumbnaill[]>>
+  urlThumbnaills: UrlThumbnaill[];
+  setUrlThumbnaills: React.Dispatch<React.SetStateAction<UrlThumbnaill[]>>;
+  count: number;
+  setCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const ThumbnaillContext = createContext<ThumbnaillContext | undefined>(undefined)
@@ -20,12 +22,14 @@ export const ThumbnaillProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     url: string,
     id: string
   }[]>([])
+  const [count, setCount] = useState<number>(0)
 
   useEffect(() => {
     const getThumbnaillsByIdUser = async () => {
-      const thumbnaills = await ThumbnaillService.getThumbnaillsByIdUser()
+      const response = await ThumbnaillService.getThumbnaillsByIdUser()
+      setCount(response.count)
       setUrlThumbnaills(() => {
-        return thumbnaills.map((thumbnaill) => {
+        return response.imagesFile.map((thumbnaill) => {
           const uint8 = new Uint8Array(thumbnaill.buffer.data)
           const blob = new Blob([uint8], { type: thumbnaill.buffer.ContentType })
           const url = URL.createObjectURL(blob)
@@ -41,7 +45,7 @@ export const ThumbnaillProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [])
 
   return (
-    <ThumbnaillContext.Provider value={{ urlThumbnaills, setUrlThumbnaills }}>
+    <ThumbnaillContext.Provider value={{ urlThumbnaills, setUrlThumbnaills, count, setCount }}>
       {children}
     </ThumbnaillContext.Provider>
   )

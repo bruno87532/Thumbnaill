@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { ConfigEnum } from "@/common/types/config";
+import { z } from "zod"
+import { ConfigEnum, QualityMode } from "@/common/types/config"
 
 export const SettingsSchema = z.object({
   civicIntegrity: z.enum(ConfigEnum),
@@ -7,6 +7,7 @@ export const SettingsSchema = z.object({
   harassmentIntimidation: z.enum(ConfigEnum),
   hateSpeech: z.enum(ConfigEnum),
   sexual: z.enum(ConfigEnum),
+  qualityMode: z.enum(QualityMode),
 })
 
 export type SettingsSchemaType = z.infer<typeof SettingsSchema>

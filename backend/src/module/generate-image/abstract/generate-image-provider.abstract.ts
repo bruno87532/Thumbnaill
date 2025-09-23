@@ -1,4 +1,4 @@
-import { HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
 
 export abstract class GenerateImageProviderAbstract {
   abstract createImage(
@@ -7,6 +7,7 @@ export abstract class GenerateImageProviderAbstract {
     inlineData: {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
-    }[]
+    }[],
+    mediaResolution: MediaResolution
   )
 }

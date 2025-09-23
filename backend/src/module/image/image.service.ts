@@ -2,17 +2,23 @@ import { BadRequestException, ForbiddenException, HttpException, Injectable, Int
 import { PrismaService } from "../prisma/prisma.service";
 import { v4 as uuid } from "uuid";
 import { S3Service } from "../s3/s3.service";
+import * as path from "path";
+import * as fs from "fs";
+import { ConfigService } from "@nestjs/config"; 
+import { AiService } from "../ai/ai.service";
 
 @Injectable()
 export class ImageService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly s3Service: S3Service
+    private readonly s3Service: S3Service,
+    private readonly configService: ConfigService,
+    private readonly aiService: AiService,
   ) { }
 
   async createImage(idUser: string, files: Express.Multer.File[]) {
     if (files.length === 0) throw new BadRequestException("File is required")
-
+    await this.handleTemporaryImage(files[0])
     const images = await Promise.all(
       files.map(async (file) => {
         const key = `${idUser}-${uuid()}`
@@ -36,6 +42,25 @@ export class ImageService {
     )
 
     return images
+  }
+
+  private async handleTemporaryImage(file: Express.Multer.File) {
+    const server = this.configService.get<string>("SERVER_IMG")
+    const uploadPath = path.join(process.cwd(), "./images")
+    const fileName = `${new Date().getTime()}-${uuid()}.png`
+    const filePath = path.join(uploadPath, fileName)
+    await fs.promises.mkdir(uploadPath, { recursive: true })
+    await fs.promises.writeFile(filePath, file.buffer)
+
+    const templatePath = path.join(process.cwd(), "./src/templates/describe-image.template.txt")
+    const templateString = fs.readFileSync(templatePath, "utf-8")
+    const urlImage = `${server}/images/${fileName}`
+    await this.aiService.chatCompletionWithImage(templateString, urlImage, {
+      model: "gpt-4o",
+      temperature: 0
+    })
+
+    return `${server}/images/${fileName}`
   }
 
   async getImagesByIdUser(idUser: string) {

@@ -98,7 +98,7 @@ export function Thumbnaill() {
                   <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                     <Search className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold mb-2">Nenhuma thumbnaill encontrada</h3>
+                  <h3 className="font-semibold mb-2">Nenhuma thumbnaill gerada</h3>
                 </div>
               </CardContent>
             </Card>

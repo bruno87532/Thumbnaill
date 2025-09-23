@@ -1,4 +1,4 @@
-import { config } from "@prisma/client";
+import { config, quality } from "@prisma/client";
 import { IsEnum, IsNotEmpty } from "class-validator"
 import { Type } from "class-transformer";
 
@@ -22,4 +22,8 @@ export class UpdateConfigDto {
   @IsEnum(config)
   @Type(() => String)
   sexual: config;
+
+  @IsEnum(quality)
+  @Type(() => String)
+  qualityMode: quality;
 }

@@ -1,5 +1,5 @@
 import axios from "axios"
-import { Config } from "@/common/types/config"
+import { Config, QualityMode } from "@/common/types/config"
 import { ConfigEnum } from "@/common/types/config"
 
 export class ConfigService {
@@ -22,6 +22,7 @@ export class ConfigService {
     harassmentIntimidation: ConfigEnum,
     hateSpeech: ConfigEnum,
     sexual: ConfigEnum
+    qualityMode: QualityMode
   }> {
     const response = await axios.get(this.pathBackend + "/config/idUser", {
       headers: {

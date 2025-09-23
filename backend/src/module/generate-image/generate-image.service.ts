@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { GenaiProvider } from "./provider/genai/genai.provider";
-import { HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
 
 @Injectable()
 export class GenerateImageService {
@@ -15,8 +15,9 @@ export class GenerateImageService {
     inlineData: {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
-    }[]
+    }[],
+    mediaResolution: MediaResolution
   ) {
-    return await this.generateImageProvider.createImage(prompt, categories, inlineData)
+    return await this.generateImageProvider.createImage(prompt, categories, inlineData, mediaResolution)
   }
 }

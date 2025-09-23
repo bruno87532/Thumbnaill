@@ -1,5 +1,5 @@
 import { Injectable, Inject, InternalServerErrorException, HttpException, NotFoundException } from "@nestjs/common";
-import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold, Content } from "@google/genai";
+import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold, Content, MediaResolution } from "@google/genai";
 import { GenerateImageProviderAbstract } from "../../abstract/generate-image-provider.abstract";
 import * as fs from "fs";
 
@@ -18,7 +18,8 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
     inlineData: {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
-    }[]
+    }[],
+    mediaResolution: MediaResolution
   ): Promise<{
     data: Buffer<ArrayBuffer>
   } | undefined> {
@@ -43,8 +44,9 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
           responseModalities: ["IMAGE", "TEXT"],
           safetySettings: [
             ...categories
-          ]
-        }
+          ],
+          mediaResolution 
+        },
       });
 
       const candidate = response.candidates?.[0];

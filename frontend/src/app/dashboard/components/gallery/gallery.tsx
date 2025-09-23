@@ -98,8 +98,8 @@ export function Gallery() {
                   <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                     <Search className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold mb-2">Nenhuma imagem encontrada</h3>
-                  <p className="text-muted-foreground text-sm">Tente ajustar os filtros ou criar uma nova thumbnail</p>
+                  <h3 className="font-semibold mb-2">Nenhuma imagem salva</h3>
+                  <p className="text-muted-foreground text-sm">Salve imagens para aparecer aqui</p>
                 </div>
               </CardContent>
             </Card>

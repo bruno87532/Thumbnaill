@@ -1,0 +1,1 @@
+export type Pages = "dashboard" | "gallery" | "history" | "settings" | "upload"

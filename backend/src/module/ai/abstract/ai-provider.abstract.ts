@@ -9,6 +9,16 @@ export abstract class AIProviderAbstract {
     }
   ): Promise<{
     content: string;
-    cost: number;
+  }>
+
+  abstract chatCompletionWithImage(
+    prompt: string,
+    imageUrl: string,
+    options?: {
+      model: "gpt-4o-mini" | "gpt-4o";
+      temperature?: number;
+    }
+  ): Promise<{
+    content: string
   }>
 }

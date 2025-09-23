@@ -7,6 +7,11 @@ export enum ConfigEnum {
   OFF = "OFF",
 }
 
+export enum QualityMode {
+  MEDIA_RESOLUTION_MEDIUM = "MEDIA_RESOLUTION_MEDIUM",
+  MEDIA_RESOLUTION_LOW = "MEDIA_RESOLUTION_LOW"
+}
+
 export type Config = {
   civicIntegrity: ConfigEnum;
   dangerousContent: ConfigEnum;      

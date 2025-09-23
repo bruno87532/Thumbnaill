@@ -4,14 +4,16 @@ import { Form, FormMessage, FormField, FormItem, FormLabel, FormControl } from "
 import { Select, SelectItem, SelectContent, SelectValue, SelectTrigger } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { SettingsSchema } from "./schema/settings.schema"
 import type { SettingsSchemaType } from "./schema/settings.schema"
-import { ConfigEnum, configEnumLabels, configLabels } from "@/common/types/config"
+import { ConfigEnum, configEnumLabels, configLabels, QualityMode } from "@/common/types/config"
 import { ConfigService } from "@/services/config.service"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useState } from "react"
+import { Zap, Sparkles } from "lucide-react"
 
 export const Settings = () => {
   const [config, setConfig] = useState<{
@@ -20,12 +22,14 @@ export const Settings = () => {
     harassmentIntimidation: ConfigEnum
     hateSpeech: ConfigEnum
     sexual: ConfigEnum
+    qualityMode: QualityMode
   }>({
     civicIntegrity: ConfigEnum.OFF,
     dangerousContent: ConfigEnum.OFF,
     harassmentIntimidation: ConfigEnum.OFF,
     hateSpeech: ConfigEnum.OFF,
     sexual: ConfigEnum.OFF,
+    qualityMode: QualityMode.MEDIA_RESOLUTION_MEDIUM,
   })
 
   const form = useForm<SettingsSchemaType>({
@@ -42,6 +46,7 @@ export const Settings = () => {
         harassmentIntimidation: cfg.harassmentIntimidation,
         hateSpeech: cfg.hateSpeech,
         sexual: cfg.sexual,
+        qualityMode: cfg.qualityMode,
       })
     }
 
@@ -76,10 +81,60 @@ export const Settings = () => {
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-balance">Configurações Avançadas</h1>
-          <p className="text-muted-foreground text-pretty">
-            Configuração Individual por Categoria
-          </p>
+          <p className="text-muted-foreground text-pretty">Configuração Individual por Categoria</p>
         </div>
+
+        <Card className="gradient-card neon-glow-hover">
+          <CardHeader>
+            <CardTitle>Configuração de Qualidade</CardTitle>
+            <CardDescription>Escolha entre velocidade e qualidade da geração</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="qualityMode"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button
+                      type="button"
+                      variant={field.value === QualityMode.MEDIA_RESOLUTION_LOW ? "default" : "outline"}
+                      className={`h-24 cursor-pointer flex-col gap-2 ${field.value === QualityMode.MEDIA_RESOLUTION_LOW
+                          ? "gradient-primary text-primary-foreground neon-glow"
+                          : ""
+                        }`}
+                      onClick={() => field.onChange(QualityMode.MEDIA_RESOLUTION_LOW)}
+                    >
+                      <Zap className="h-6 w-6 rotate-180" />
+                      <div className="text-center">
+                        <div className="font-semibold">Qualidade Média</div>
+                        <div className="text-xs opacity-80">Mais leve e rápida</div>
+                      </div>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant={field.value === QualityMode.MEDIA_RESOLUTION_MEDIUM ? "default" : "outline"}
+                      className={`h-24 cursor-pointer flex-col gap-2 ${field.value === QualityMode.MEDIA_RESOLUTION_MEDIUM
+                          ? "gradient-primary text-primary-foreground neon-glow"
+                          : ""
+                        }`}
+                      onClick={() => field.onChange(QualityMode.MEDIA_RESOLUTION_MEDIUM)}
+                    >
+                      <Zap className="h-6 w-6" />
+                      <div className="text-center">
+                        <div className="font-semibold">Qualidade Alta</div>
+                        <div className="text-xs opacity-80">Equilibrada</div>
+                      </div>
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+          </CardContent>
+        </Card>
 
         <div className="space-y-4">
           {Object.entries(configLabels).map(([key, label]) => (
@@ -118,13 +173,31 @@ export const Settings = () => {
         <div className="mt-6 pt-4 border-t border-border">
           <Label className="text-sm font-medium mb-3 block">Configurações Rápidas</Label>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" className="cursor-pointer" size="sm" onClick={() => setAllConfigs(ConfigEnum.OFF)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer bg-transparent"
+              size="sm"
+              onClick={() => setAllConfigs(ConfigEnum.OFF)}
+            >
               Desativar Todos
             </Button>
-            <Button type="button" variant="outline" className="cursor-pointer" size="sm" onClick={() => setAllConfigs(ConfigEnum.BLOCK_MEDIUM_AND_ABOVE)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer bg-transparent"
+              size="sm"
+              onClick={() => setAllConfigs(ConfigEnum.BLOCK_MEDIUM_AND_ABOVE)}
+            >
               Moderado para Todos
             </Button>
-            <Button type="button" variant="outline" className="cursor-pointer" size="sm" onClick={() => setAllConfigs(ConfigEnum.BLOCK_ONLY_HIGH)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer bg-transparent"
+              size="sm"
+              onClick={() => setAllConfigs(ConfigEnum.BLOCK_ONLY_HIGH)}
+            >
               Alto para Todos
             </Button>
           </div>

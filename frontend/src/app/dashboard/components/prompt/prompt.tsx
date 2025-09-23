@@ -146,10 +146,11 @@ export const Prompt = () => {
             <div className="mt-4 flex justify-center gap-2">
               <Button
                 variant="outline"
+                className="cursor-pointer"
                 onClick={() => {
                   const link = document.createElement("a")
                   link.href = thumbnailUrl
-                  link.download = "thumbnail-gerada.png cursor-pointer"
+                  link.download = "thumbnail-gerada.png"
                   link.click()
                 }}
               >

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { AIProviderAbstract } from "../../abstract/ai-provider.abstract";
 import { ChatOpenAI } from "@langchain/openai";
 import { ServiceUnavailableException } from "@nestjs/common";
@@ -16,7 +16,6 @@ export class OpenAIProvider implements AIProviderAbstract {
     }
   ): Promise<{
     content: string;
-    cost: number;
   }> {
     try {
       const { model = "gpt-4o", temperature = 1 } = options || {}
@@ -28,36 +27,51 @@ export class OpenAIProvider implements AIProviderAbstract {
       if (!response.usage_metadata) throw new BadRequestException("usage_metadata is required")
 
       const { input_tokens, output_tokens } = response.usage_metadata
-      const cost = this.calculateCosts(model, input_tokens, output_tokens)
       return {
         content: response.content,
-        cost
       }
     } catch (error) {
       throw new ServiceUnavailableException("An error ocurred while generating message with OpenAI", error)
     }
   }
 
-  private calculateCosts(
-    model: "gpt-4o-mini" | "gpt-4o",
-    inputTokens: number,
-    outputTokens: number,
-  ) {
-    const expenses = {
-      "gpt-4o-mini": {
-        input: 0.15,
-        output: 0.60
-      },
-      "gpt-4o": {
-        input: 2.50,
-        output: 10
-      },
+  async chatCompletionWithImage(
+    prompt: string,
+    imageUrl: string,
+    options?: {
+      model: "gpt-4o-mini" | "gpt-4o";
+      temperature?: number;
     }
-
-    const price = expenses[model]
-    const inputCost = (price.input * inputTokens) / 1000000
-    const outputCost = (price.output * outputTokens) / 1000000
-    const cost = parseFloat((inputCost + outputCost).toFixed(10))
-    return cost
+  ): Promise<{
+    content: string;
+  }> {
+    try {
+      console.log(prompt)
+      console.log(imageUrl)
+      const { model = "gpt-4o", temperature = 0.0 } = options || {};
+      this.llm.model = model;
+      this.llm.temperature = temperature;
+      this.llm.model = "gpt-4o"
+      const messages = [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: imageUrl } }
+          ]
+        }
+      ];
+      const response = await this.llm.invoke(messages);
+  
+      if (typeof response.content !== "string") throw new BadRequestException("The response must be a string");
+      if (!response.usage_metadata) throw new BadRequestException("usage_metadata is required");
+      console.log(response)
+      return {
+        content: response.content,
+      };
+    } catch (error) {
+      console.error("An error ocurred while generating completion with image", error)
+      throw new InternalServerErrorException("An error ocurred while generating completion with image")
+    }
   }
 }

@@ -6,7 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { GenerateImageService } from "../generate-image/generate-image.service";
 import { ConfigService } from "../config/config.service";
-import { HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
 import { mapToHarmCategory } from "src/common/functions/mapToHarmCategory";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3Service } from "../s3/s3.service";
@@ -25,10 +25,10 @@ export class ThumbnaillService {
   ) { }
 
   async createThumbnaill(data: CreateThumbnaillDto, idUser: string) {
-    const refinedPrompt = await this.handlePrompt(data.prompt)
-    const categories = await this.handleConfig(idUser)
+    const refinedPrompt = await this.handlePrompt(data.prompt, !!data.ids)
+    const { settings, configWithQuality } = await this.handleConfig(idUser)
     const inlineData = await this.handleImages(data.ids)
-    const thumbnaill = await this.generateImageService.createImage(data.prompt, categories, inlineData)
+    const thumbnaill = await this.generateImageService.createImage(refinedPrompt, settings, inlineData, configWithQuality)
     if (thumbnaill?.data) {
       const key = idUser + uuid()
 
@@ -69,9 +69,12 @@ export class ThumbnaillService {
     return inlineData
   }
 
-  private async handlePrompt(prompt: string) {
-    const templatePath = path.join(__dirname, "../../templates/refine-prompt.template.txt")
+  private async handlePrompt(prompt: string, isImage: boolean) {
+    const templatePath = isImage ?
+      path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
+      path.join(__dirname, "../../templates/refine-prompt.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
+
     const response = await this.aiService.chatCompletionWithTemplate(
       templateString,
       {
@@ -85,21 +88,25 @@ export class ThumbnaillService {
   }
 
   private async handleConfig(idUser: string) {
-    const config = Object.fromEntries(
+    const config = await this.configService.getConfigByIdUser(idUser)
+    const configWithoutQuality = Object.fromEntries(
       Object.entries(
-        await this.configService.getConfigByIdUser(idUser)
+        config
       ).filter(
-        ([key, _]) => key !== "id" && key !== "idUser"
+        ([key, _]) => key !== "id" && key !== "idUser" && key !== "qualityMode"
       )
     )
 
-    return Object.entries(config).map(([key, value]) => ({
+    const configWithQuality = config.qualityMode as MediaResolution
+    const settings = Object.entries(configWithoutQuality).map(([key, value]) => ({
       category: mapToHarmCategory(key),
       threshold: value as HarmBlockThreshold
     })) as {
       category: HarmCategory,
       threshold: HarmBlockThreshold
     }[]
+
+    return { configWithQuality, settings }
   }
 
   async getThumbnaillsByIdUser(idUser: string) {
@@ -122,7 +129,10 @@ export class ThumbnaillService {
           }
         })
       )
-      return imagesFile
+      return {
+        imagesFile,
+        count: await this.prismaService.thumbnaill.count()
+      }
     } catch (error) {
       console.error("An error ocurred while fetching thumbnaiils with idUser", idUser, error)
       throw new InternalServerErrorException("An error ocurred while fetching thumbnaiils with idUser")

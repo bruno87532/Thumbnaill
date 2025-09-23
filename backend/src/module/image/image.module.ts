@@ -3,11 +3,13 @@ import { ImageService } from "./image.service";
 import { ImageController } from "./image.controller";
 import { PrismaModule } from "../prisma/prisma.module";
 import { S3Module } from "../s3/s3.module";
+import { AiModule } from "../ai/ai.module";
 
 @Module({
   imports: [
     PrismaModule,
-    S3Module
+    S3Module,
+    AiModule
   ],
   controllers: [ImageController],
   exports: [ImageService],

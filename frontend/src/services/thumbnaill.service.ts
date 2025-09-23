@@ -18,20 +18,26 @@ export class ThumbnaillService {
   }
 
   static async getThumbnaillsByIdUser(): Promise<{
-    buffer: {
-      type: "Buffer",
-      data: number[],
-      ContentType: string
-    },
-    id: string
-  }[]> {
+    imagesFile: {
+      buffer: {
+        type: "Buffer",
+        data: number[],
+        ContentType: string
+      },
+      id: string
+    }[],
+    count: number
+  }> {
     const response = await axios.get(this.pathBackend + "/thumbnaill/idUser", {
       headers: {
         "Content-Type": "multipart/form-data"
       },
       withCredentials: true
     })
-    return response.data
+    return {
+      imagesFile: response.data.imagesFile,
+      count: response.data.count
+    }
   }
 
   static async deleteImageById(id: string) {
