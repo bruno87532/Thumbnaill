@@ -32,7 +32,7 @@ enum ratio {
 
 model aspectRatio {
   id       String @id
-  typePost ratio  @default(YOUTUBE)
+  typePost ratio  @unique @default(YOUTUBE)
 }
 
 model User {

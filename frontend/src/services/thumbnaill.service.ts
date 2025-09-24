@@ -1,13 +1,18 @@
 import axios from "axios"
+import { AspectRatio } from "@/app/dashboard/components/prompt/schema/prompt.schema"
 
 export class ThumbnaillService {
   private static pathBackend = process.env.NEXT_PUBLIC_BACKEND
 
-  static async createThumbnaill(data: { ids: string[], prompt: string }): Promise<{
+  static async createThumbnaill(data: { 
+    ids: string[], 
+    prompt: string,
+    aspectRatio: AspectRatio
+  }): Promise<{
     data: number[],
     thumbnaill: {
       id: string
-    }
+    },
   }> {
     const response = await axios.post(this.pathBackend + "/thumbnaill", data, {
       headers: {

@@ -7,9 +7,11 @@ import { GenerateImageModule } from "../generate-image/generate-image.module";
 import { ConfigModule } from "../config/config.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { S3Module } from "../s3/s3.module";
+import { AspectRatioModule } from "../ratio/aspect-ratio.module";
 
 @Module({
   imports: [
+    AspectRatioModule,
     PrismaModule,
     S3Module,
     AiModule,

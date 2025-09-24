@@ -48,10 +48,12 @@ export const Prompt = () => {
 
   const handleSubmit = async (data: PromptSchemaType) => {
     setIsLoading(true)
+    console.log(data)
     try {
       const result = await ThumbnaillService.createThumbnaill({
         ids: selectedImages,
         prompt: data.prompt,
+        aspectRatio: data.aspectRatio
       })
 
       if (result && result.data) {

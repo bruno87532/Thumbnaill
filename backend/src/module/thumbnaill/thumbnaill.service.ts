@@ -11,6 +11,7 @@ import { mapToHarmCategory } from "src/common/functions/mapToHarmCategory";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3Service } from "../s3/s3.service";
 import { v4 as uuid } from "uuid"
+import { AspectRatioService } from "../ratio/aspect-ratio.service";
 
 @Injectable()
 export class ThumbnaillService {
@@ -21,41 +22,49 @@ export class ThumbnaillService {
     private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
     private readonly s3Service: S3Service,
+    private readonly aspectRatioService: AspectRatioService,
   ) { }
 
   async createThumbnaill(data: CreateThumbnaillDto, idUser: string) {
     // const refinedPrompt = await this.handlePrompt(data.prompt, data.ids)
     // console.log(refinedPrompt)
-    const { settings, configWithQuality } = await this.handleConfig(idUser)
-    const inlineData = await this.handleImages(data.ids)
-    const thumbnaill = await this.generateImageService.createImage(data.prompt, settings, inlineData, configWithQuality)
-    let id = ""
+    console.log("aqui foi")
+    const aspectRatio = await this.aspectRatioService.getAspectRatioByTypePost(data.aspectRatio)
+    const size = await this.s3Service.getImage({
+      Key: aspectRatio.id
+    })
+    console.log(size)
+
+    // const { settings, configWithQuality } = await this.handleConfig(idUser)
+    // const inlineData = await this.handleImages(data.ids)
+    // const thumbnaill = await this.generateImageService.createImage(data.prompt, settings, inlineData, configWithQuality)
+    // let id = ""
     
-    if (thumbnaill?.data) {
-      const key = idUser + uuid()
+    // if (thumbnaill?.data) {
+    //   const key = idUser + uuid()
 
-      const uploadParams = {
-        Key: key,
-        Body: thumbnaill.data,
-        ContentType: "image/png"
-      }
-      await this.s3Service.saveImage(uploadParams)
-      const thumbDb = await this.prismaService.thumbnaill.create({
-        data: {
-          id: key,
-          idUser: idUser
-        }
-      })
+    //   const uploadParams = {
+    //     Key: key,
+    //     Body: thumbnaill.data,
+    //     ContentType: "image/png"
+    //   }
+    //   await this.s3Service.saveImage(uploadParams)
+    //   const thumbDb = await this.prismaService.thumbnaill.create({
+    //     data: {
+    //       id: key,
+    //       idUser: idUser
+    //     }
+    //   })
 
-      id = thumbDb.id
-    }
+    //   id = thumbDb.id
+    // }
 
-    return {
-      buffer: thumbnaill?.data,
-      thumbnaill: {
-        id
-      }
-    }
+    // return {
+    //   buffer: thumbnaill?.data,
+    //   thumbnaill: {
+    //     id
+    //   }
+    // }
   }
 
   private async handleImages(ids: string[]) {

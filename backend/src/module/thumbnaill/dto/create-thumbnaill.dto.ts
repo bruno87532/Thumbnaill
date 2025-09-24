@@ -1,4 +1,6 @@
-import { IsString, IsNotEmpty, IsArray, ArrayMaxSize, IsDefined, MinLength } from "class-validator";
+import { IsString, IsNotEmpty, IsArray, ArrayMaxSize, IsDefined, MinLength, IsEnum } from "class-validator";
+import { Type } from "class-transformer";
+import { ratio } from "@prisma/client";
 
 export class CreateThumbnaillDto {
   @IsArray()
@@ -14,4 +16,8 @@ export class CreateThumbnaillDto {
   @IsNotEmpty()
   @MinLength(1)
   prompt: string
+
+  @IsEnum(ratio)
+  @Type(() => String)
+  aspectRatio: ratio;
 }
