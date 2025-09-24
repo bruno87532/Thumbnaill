@@ -45,7 +45,7 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
           safetySettings: [
             ...categories
           ],
-          mediaResolution 
+          mediaResolution,
         },
       });
 

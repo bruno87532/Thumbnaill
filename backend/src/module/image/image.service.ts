@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import { S3Service } from "../s3/s3.service";
 import * as path from "path";
 import * as fs from "fs";
-import { ConfigService } from "@nestjs/config"; 
+import { ConfigService } from "@nestjs/config";
 import { AiService } from "../ai/ai.service";
 
 @Injectable()
@@ -18,9 +18,9 @@ export class ImageService {
 
   async createImage(idUser: string, files: Express.Multer.File[]) {
     if (files.length === 0) throw new BadRequestException("File is required")
-    await this.handleTemporaryImage(files[0])
-    const images = await Promise.all(
+    const results = await Promise.all(
       files.map(async (file) => {
+        // const description = await this.handleTemporaryImage(files[0])
         const key = `${idUser}-${uuid()}`
         const uploadParams = {
           Key: key,
@@ -28,20 +28,26 @@ export class ImageService {
           ContentType: file.mimetype
         }
 
-        await this.s3Service.saveImage(uploadParams)
-
+        const imageFile = await this.s3Service.saveImage(uploadParams)
         const image = await this.prismaService.image.create({
           data: {
             id: key,
-            idUser
+            idUser,
           }
         })
 
-        return image
+        return { image, imageFile }
       })
     )
 
-    return images
+    const images = results.map((result) => result.image)
+    const ids = images.map((image) => image.id)
+    const { imagesFile } = await this.getImagesByIds(ids)
+
+    return {
+      images,
+      imagesFile
+    }
   }
 
   private async handleTemporaryImage(file: Express.Multer.File) {
@@ -55,12 +61,13 @@ export class ImageService {
     const templatePath = path.join(process.cwd(), "./src/templates/describe-image.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
     const urlImage = `${server}/images/${fileName}`
-    await this.aiService.chatCompletionWithImage(templateString, urlImage, {
+    const response = await this.aiService.chatCompletionWithImage(templateString, urlImage, {
       model: "gpt-4o",
       temperature: 0
     })
+    const parsed = JSON.parse(response.content)
 
-    return `${server}/images/${fileName}`
+    return parsed.response
   }
 
   async getImagesByIdUser(idUser: string) {
@@ -129,7 +136,7 @@ export class ImageService {
         })
       )
 
-      return imagesFile
+      return { imagesFile, images }
     } catch (error) {
       console.error("An error ocurred while fetching images with ids", error)
       throw new InternalServerErrorException("An error ocurred while fetching images with ids")

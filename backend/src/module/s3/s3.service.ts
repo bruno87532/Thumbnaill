@@ -61,7 +61,7 @@ export class S3Service {
       const image = await this.s3Client.send(command)
 
       return image
-    } catch (error) { 
+    } catch (error) {
       console.error("An error ocurred while deleting image", error)
       throw new InternalServerErrorException("An error ocurred while deleting image")
     }

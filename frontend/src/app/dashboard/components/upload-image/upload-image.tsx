@@ -15,11 +15,13 @@ import { Input } from "@/components/ui/input"
 import { Zap } from "lucide-react"
 import { ImageService } from "@/services/image.service"
 import { toast } from "sonner"
+import { useImage } from "../../context/use-image"
 
 export const UploadImage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [uploadedImages, setUploadedImages] = useState<{ file: File; preview: string }[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const { urlImages, setUrlImages } = useImage()
 
   const form = useForm({
     resolver: zodResolver(ImageSchema),
@@ -30,7 +32,21 @@ export const UploadImage = () => {
 
   const handleSubmit = async (data: ImageSchemaType) => {
     setIsLoading(true)
-    await ImageService.createImage(data.files)
+    const response = await ImageService.createImage(data.files)
+    setUrlImages((prev) => {
+      return [
+        ...response.imagesFile.map((image, index) => {
+          const uint8 = new Uint8Array(image.buffer.data)
+          const blob = new Blob([uint8], { type: image.buffer.ContentType })
+          const url = URL.createObjectURL(blob)
+          return {
+            url,
+            id: response.images[index].id
+          }
+        }),
+        ...prev
+      ]
+    })
     toast("Imagens salvas", {
       description: "Imagens salvas com sucesso",
       action: {
@@ -145,7 +161,7 @@ export const UploadImage = () => {
                         type="button"
                         variant="destructive"
                         size="sm"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute cursor-pointer -top-2 -right-2 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => removeImage(index)}
                       >
                         <X className="h-3 w-3" />

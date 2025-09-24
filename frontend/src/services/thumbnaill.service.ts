@@ -4,7 +4,10 @@ export class ThumbnaillService {
   private static pathBackend = process.env.NEXT_PUBLIC_BACKEND
 
   static async createThumbnaill(data: { ids: string[], prompt: string }): Promise<{
-    data: number[]
+    data: number[],
+    thumbnaill: {
+      id: string
+    }
   }> {
     const response = await axios.post(this.pathBackend + "/thumbnaill", data, {
       headers: {
@@ -13,7 +16,8 @@ export class ThumbnaillService {
       withCredentials: true
     })
     return {
-      data: response.data.buffer.data
+      data: response.data.buffer.data,
+      thumbnaill: response.data.thumbnaill
     }
   }
 

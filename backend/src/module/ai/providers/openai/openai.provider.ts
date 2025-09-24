@@ -46,8 +46,6 @@ export class OpenAIProvider implements AIProviderAbstract {
     content: string;
   }> {
     try {
-      console.log(prompt)
-      console.log(imageUrl)
       const { model = "gpt-4o", temperature = 0.0 } = options || {};
       this.llm.model = model;
       this.llm.temperature = temperature;
@@ -65,7 +63,6 @@ export class OpenAIProvider implements AIProviderAbstract {
   
       if (typeof response.content !== "string") throw new BadRequestException("The response must be a string");
       if (!response.usage_metadata) throw new BadRequestException("usage_metadata is required");
-      console.log(response)
       return {
         content: response.content,
       };

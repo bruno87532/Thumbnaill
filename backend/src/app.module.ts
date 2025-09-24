@@ -6,6 +6,7 @@ import { UserModule } from './module/user/user.module';
 import { GenerateImageModule } from './module/generate-image/generate-image.module';
 import { ImageModule } from './module/image/image.module';
 import { ConfigModule as ConfigModuleDb } from './module/config/config.module';
+import { S3Module } from './module/s3/s3.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { ConfigModule as ConfigModuleDb } from './module/config/config.module';
     ImageModule,
     UserModule,
     GenerateImageModule,
-    ConfigModuleDb
+    ConfigModuleDb,
+    S3Module
   ],
 })
 export class AppModule {}

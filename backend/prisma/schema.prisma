@@ -21,6 +21,20 @@ enum quality {
   MEDIA_RESOLUTION_LOW
 }
 
+enum ratio {
+  YOUTUBE
+  INSTAGRAM_TIKTOK
+  INSTAGRAM_POST
+  INSTAGRAM_PORTRAIT
+  CINEMATIC
+  PINTEREST
+}
+
+model aspectRatio {
+  id       String @id
+  typePost ratio  @default(YOUTUBE)
+}
+
 model User {
   id         String       @id @default(uuid())
   email      String       @unique
@@ -31,9 +45,10 @@ model User {
 }
 
 model Image {
-  id     String @id
-  idUser String
-  user   User   @relation(fields: [idUser], references: [id])
+  id          String @id
+  idUser      String
+  user        User   @relation(fields: [idUser], references: [id])
+  description String @default("")
 }
 
 model Config {

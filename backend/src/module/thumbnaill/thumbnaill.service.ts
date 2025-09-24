@@ -10,7 +10,6 @@ import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai
 import { mapToHarmCategory } from "src/common/functions/mapToHarmCategory";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3Service } from "../s3/s3.service";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuid } from "uuid"
 
 @Injectable()
@@ -25,10 +24,13 @@ export class ThumbnaillService {
   ) { }
 
   async createThumbnaill(data: CreateThumbnaillDto, idUser: string) {
-    const refinedPrompt = await this.handlePrompt(data.prompt, !!data.ids)
+    // const refinedPrompt = await this.handlePrompt(data.prompt, data.ids)
+    // console.log(refinedPrompt)
     const { settings, configWithQuality } = await this.handleConfig(idUser)
     const inlineData = await this.handleImages(data.ids)
-    const thumbnaill = await this.generateImageService.createImage(refinedPrompt, settings, inlineData, configWithQuality)
+    const thumbnaill = await this.generateImageService.createImage(data.prompt, settings, inlineData, configWithQuality)
+    let id = ""
+    
     if (thumbnaill?.data) {
       const key = idUser + uuid()
 
@@ -38,15 +40,21 @@ export class ThumbnaillService {
         ContentType: "image/png"
       }
       await this.s3Service.saveImage(uploadParams)
-      await this.prismaService.thumbnaill.create({
+      const thumbDb = await this.prismaService.thumbnaill.create({
         data: {
           id: key,
           idUser: idUser
         }
       })
+
+      id = thumbDb.id
     }
+
     return {
-      buffer: thumbnaill?.data
+      buffer: thumbnaill?.data,
+      thumbnaill: {
+        id
+      }
     }
   }
 
@@ -57,8 +65,8 @@ export class ThumbnaillService {
     }[] = []
 
     if (ids.length !== 0) {
-      const images = await this.imageService.getImagesByIds(ids)
-      for (const image of images) {
+      const { images, imagesFile } = await this.imageService.getImagesByIds(ids)
+      for (const image of imagesFile) {
         inlineData.push({
           mimeType: "image/jpeg",
           data: image.buffer.toString("base64")
@@ -69,16 +77,22 @@ export class ThumbnaillService {
     return inlineData
   }
 
-  private async handlePrompt(prompt: string, isImage: boolean) {
-    const templatePath = isImage ?
+  private async handlePrompt(prompt: string, ids: string[]) {
+    const templatePath = ids.length > 0 ?
       path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
       path.join(__dirname, "../../templates/refine-prompt.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
-
+    
+    let descriptions = ""
+    if (ids.length > 0) {
+      const { images } = await this.imageService.getImagesByIds(ids) 
+      descriptions = images.map((image, index) => `Image ${index}: ${image.description}\n-----`).join("\n")
+    }
     const response = await this.aiService.chatCompletionWithTemplate(
       templateString,
       {
-        prompt
+        prompt,
+        ...(ids.length > 0 ? {descriptions} : {})
       },
       { model: "gpt-4o", temperature: 1 }
     )
