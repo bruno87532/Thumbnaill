@@ -1,13 +1,18 @@
 import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
 
 export abstract class GenerateImageProviderAbstract {
-  abstract createImage(
+  abstract createImage(data: {
     prompt: string,
-    categories: { category: HarmCategory, threshold: HarmBlockThreshold }[],
+    aspectRatioText: string,
+    categories: {
+      category: HarmCategory,
+      threshold: HarmBlockThreshold
+    }[],
     inlineData: {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
     }[],
-    mediaResolution: MediaResolution
-  )
+    mediaResolution: MediaResolution,
+    promptText?: string,
+  })
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { ImageService } from "@/services/image.service"
 
 
@@ -10,8 +10,10 @@ type UrlImage = {
 }
 
 type ImageContext = {
-  urlImages: UrlImage[]
-  setUrlImages: React.Dispatch<React.SetStateAction<UrlImage[]>>
+  urlImages: UrlImage[];
+  setUrlImages: React.Dispatch<React.SetStateAction<UrlImage[]>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ImageContext = createContext<ImageContext | undefined>(undefined)
@@ -21,6 +23,7 @@ export const ImageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     url: string,
     id: string
   }[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
     const getImagesByIdUser = async () => {
@@ -36,13 +39,14 @@ export const ImageProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         })
       })
+      setIsLoading(false)
     }
 
     getImagesByIdUser()
   }, [])
 
   return (
-    <ImageContext.Provider value={{ urlImages, setUrlImages }}>
+    <ImageContext.Provider value={{ urlImages, setUrlImages, isLoading, setIsLoading }}>
       {children}
     </ImageContext.Provider>
   )

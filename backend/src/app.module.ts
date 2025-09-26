@@ -7,6 +7,7 @@ import { GenerateImageModule } from './module/generate-image/generate-image.modu
 import { ImageModule } from './module/image/image.module';
 import { ConfigModule as ConfigModuleDb } from './module/config/config.module';
 import { S3Module } from './module/s3/s3.module';
+import { DescribeThumbnaillModule } from './module/describe-thumbnaill/describe-thumbnaill.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { S3Module } from './module/s3/s3.module';
     ImageModule,
     UserModule,
     GenerateImageModule,
+    DescribeThumbnaillModule,
     ConfigModuleDb,
     S3Module
   ],

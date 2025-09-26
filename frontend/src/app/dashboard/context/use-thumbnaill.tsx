@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { ThumbnaillService } from "@/services/thumbnaill.service"
 
 type UrlThumbnaill = {
@@ -13,6 +13,8 @@ type ThumbnaillContext = {
   setUrlThumbnaills: React.Dispatch<React.SetStateAction<UrlThumbnaill[]>>;
   count: number;
   setCount: React.Dispatch<React.SetStateAction<number>>;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ThumbnaillContext = createContext<ThumbnaillContext | undefined>(undefined)
@@ -23,6 +25,7 @@ export const ThumbnaillProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     id: string
   }[]>([])
   const [count, setCount] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
     const getThumbnaillsByIdUser = async () => {
@@ -39,13 +42,14 @@ export const ThumbnaillProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         })
       })
+      setIsLoading(false)
     }
 
     getThumbnaillsByIdUser()
   }, [])
 
   return (
-    <ThumbnaillContext.Provider value={{ urlThumbnaills, setUrlThumbnaills, count, setCount }}>
+    <ThumbnaillContext.Provider value={{ urlThumbnaills, setUrlThumbnaills, count, setCount, isLoading, setIsLoading }}>
       {children}
     </ThumbnaillContext.Provider>
   )

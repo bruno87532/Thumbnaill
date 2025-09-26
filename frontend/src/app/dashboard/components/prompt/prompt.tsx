@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form"
 import { ThumbnaillService } from "@/services/thumbnaill.service"
-import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { useThumbnaill } from "../../context/use-thumbnaill"
 import { AspectRatio } from "./schema/prompt.schema"
 
@@ -36,7 +36,7 @@ export const Prompt = () => {
   }
 
   const [selectedImages, setSelectedImages] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
   const [generatedThumbnail, setGeneratedThumbnail] = useState<Uint8Array | null>(null)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const { urlImages } = useImage()
@@ -47,8 +47,7 @@ export const Prompt = () => {
   }
 
   const handleSubmit = async (data: PromptSchemaType) => {
-    setIsLoading(true)
-    console.log(data)
+    setIsLoadingSubmit(true)
     try {
       const result = await ThumbnaillService.createThumbnaill({
         ids: selectedImages,
@@ -76,9 +75,15 @@ export const Prompt = () => {
 
       }
     } catch (error) {
-      console.error("Erro ao gerar thumbnail:", error)
+      toast("Ocorreu um erro durante a geração da thumbnaill", {
+        description: "Ocorreu um erro inesperado durante o processo de geração. Por favor tente novamente mais tarde.",
+        action: {
+          label: "Feito",
+          onClick: () => null,
+        },
+      })
     } finally {
-      setIsLoading(false)
+      setIsLoadingSubmit(false)
     }
   }
 
@@ -148,8 +153,8 @@ export const Prompt = () => {
               <div
                 key={image.id}
                 className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 hover:scale-105 ${selectedImages.includes(image.id)
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "border-border hover:border-primary/50"
+                  ? "border-primary ring-2 ring-primary/20"
+                  : "border-border hover:border-primary/50"
                   }`}
                 onClick={() => toggleImageSelection(image.id)}
               >
@@ -213,12 +218,12 @@ export const Prompt = () => {
 
       <div className="flex justify-end">
         <Button
-          disabled={isLoading}
+          disabled={isLoadingSubmit}
           className="min-w-[140px] cursor-pointer"
           type="submit"
           form="prompt-form"
         >
-          {isLoading ? "Gerando..." : "Gerar Thumbnail"}
+          {isLoadingSubmit ? "Gerando..." : "Gerar Thumbnail"}
         </Button>
       </div>
     </div>

@@ -6,8 +6,9 @@ import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai
 export class GenerateImageService {
   constructor(private readonly generateImageProvider: GenaiProvider) { }
 
-  async createImage(
+  async createImage(data: {
     prompt: string,
+    aspectRatioText: string,
     categories: {
       category: HarmCategory,
       threshold: HarmBlockThreshold
@@ -16,8 +17,9 @@ export class GenerateImageService {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
     }[],
-    mediaResolution: MediaResolution
-  ) {
-    return await this.generateImageProvider.createImage(prompt, categories, inlineData, mediaResolution)
+    mediaResolution: MediaResolution,
+    promptText?: string,
+  }) {
+    return await this.generateImageProvider.createImage(data)
   }
 }

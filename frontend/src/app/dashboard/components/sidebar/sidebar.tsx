@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, User, LucideIcon } from "lucide-react"
+import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, User, LucideIcon, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Pages } from "@/common/types/pages"
 
@@ -43,6 +43,12 @@ const menuItems: {
     icon: Settings,
     description: "Ajustes e preferências",
   },
+  {
+    id: "describe-thumb",
+    label: "Descrever Thumbnaill",
+    icon: Pencil,
+    description: "Descrever thumbnaill detalhadamente"
+  }
 ]
 
 export const Sidebar: React.FC<{

@@ -24,7 +24,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { ThumbnaillService } from "@/services/thumbnaill.service"
 
 export function Thumbnaill() {
-  const { urlThumbnaills, setUrlThumbnaills } = useThumbnaill()
+  const { urlThumbnaills, setUrlThumbnaills, isLoading } = useThumbnaill()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<string | null>(null)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
@@ -86,7 +86,7 @@ export function Thumbnaill() {
       </div>
 
       {
-        false ? (
+        isLoading ? (
           <div className="flex justify-center items-center min-h-screen">
             <Loader2 className="w-10 h-10 animate-spin" />
           </div>

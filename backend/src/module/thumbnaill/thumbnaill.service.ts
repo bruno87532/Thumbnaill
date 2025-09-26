@@ -7,7 +7,7 @@ import * as path from "path";
 import { GenerateImageService } from "../generate-image/generate-image.service";
 import { ConfigService } from "../config/config.service";
 import { HarmCategory, HarmBlockThreshold, MediaResolution } from "@google/genai";
-import { mapToHarmCategory } from "src/common/functions/mapToHarmCategory";
+import { mapToHarmCategory } from "src/common/functions/map-to-harm-category";
 import { PrismaService } from "../prisma/prisma.service";
 import { S3Service } from "../s3/s3.service";
 import { v4 as uuid } from "uuid"
@@ -26,45 +26,61 @@ export class ThumbnaillService {
   ) { }
 
   async createThumbnaill(data: CreateThumbnaillDto, idUser: string) {
-    // const refinedPrompt = await this.handlePrompt(data.prompt, data.ids)
-    // console.log(refinedPrompt)
-    console.log("aqui foi")
-    const aspectRatio = await this.aspectRatioService.getAspectRatioByTypePost(data.aspectRatio)
-    const size = await this.s3Service.getImage({
-      Key: aspectRatio.id
-    })
-    console.log(size)
+    try {
+      const refinedPrompt = await this.handlePrompt(data.prompt, data.ids)
+      const aspectRatio = await this.aspectRatioService.getAspectRatioByTypePost(data.aspectRatio)
+      const size = await this.s3Service.getImage({
+        Key: aspectRatio.id
+      })
 
-    // const { settings, configWithQuality } = await this.handleConfig(idUser)
-    // const inlineData = await this.handleImages(data.ids)
-    // const thumbnaill = await this.generateImageService.createImage(data.prompt, settings, inlineData, configWithQuality)
-    // let id = ""
-    
-    // if (thumbnaill?.data) {
-    //   const key = idUser + uuid()
+      const { settings, configWithQuality } = await this.handleConfig(idUser)
+      const inlineData = await this.handleImages(data.ids)
+      inlineData.push({
+        mimeType: "image/jpeg",
+        data: Buffer.concat(size).toString("base64")
+      })
 
-    //   const uploadParams = {
-    //     Key: key,
-    //     Body: thumbnaill.data,
-    //     ContentType: "image/png"
-    //   }
-    //   await this.s3Service.saveImage(uploadParams)
-    //   const thumbDb = await this.prismaService.thumbnaill.create({
-    //     data: {
-    //       id: key,
-    //       idUser: idUser
-    //     }
-    //   })
+      const aspectRatioText = data.ids.length > 0 ? "\n Use the transparent image as the reference for final aspect ratio and fill the area that wasn't shown in the original picture. If you are going to resize, you must maintain the exact aspect ratio of the transparent image. The image must not have black, transparent borders or a checkerboard transparency pattern." : " Use the transparent image as the reference for final aspect ratio. If you are going to resize, you must maintain the exact aspect ratio of the transparent image. The image must not have black, transparent borders or a checkerboard transparency pattern."
+      const thumbnaill = await this.generateImageService.createImage({
+        prompt: refinedPrompt.refinedPrompt,
+        aspectRatioText,
+        categories: settings,
+        mediaResolution: configWithQuality,
+        inlineData,
+        ...(refinedPrompt.promptText ? {promptText: refinedPrompt.promptText} : {})
+      })
+      let id = ""
 
-    //   id = thumbDb.id
-    // }
+      if (thumbnaill?.data) {
+        const key = idUser + uuid()
 
-    // return {
-    //   buffer: thumbnaill?.data,
-    //   thumbnaill: {
-    //     id
-    //   }
-    // }
+        const uploadParams = {
+          Key: key,
+          Body: thumbnaill.data,
+          ContentType: "image/png"
+        }
+        await this.s3Service.saveImage(uploadParams)
+        const thumbDb = await this.prismaService.thumbnaill.create({
+          data: {
+            id: key,
+            idUser: idUser
+          }
+        })
+
+        id = thumbDb.id
+      }
+
+      return {
+        buffer: thumbnaill?.data,
+        thumbnaill: {
+          id
+        }
+      }
+    } catch (error) {
+      console.error("An error ocurred while creating thumbnaill with prompt", data.prompt, error)
+      if (error instanceof HttpException) throw error
+      throw new InternalServerErrorException("An error ocurred while creating thumbnaill with prompt")
+    }
   }
 
   private async handleImages(ids: string[]) {
@@ -86,28 +102,53 @@ export class ThumbnaillService {
     return inlineData
   }
 
-  private async handlePrompt(prompt: string, ids: string[]) {
+  private async handlePrompt(prompt: string, ids: string[]): Promise<{
+    refinedPrompt: string,
+    promptText?: string
+  }> {
     const templatePath = ids.length > 0 ?
       path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
       path.join(__dirname, "../../templates/refine-prompt.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
-    
+
     let descriptions = ""
+    let promptText = ""
     if (ids.length > 0) {
-      const { images } = await this.imageService.getImagesByIds(ids) 
+      const { images } = await this.imageService.getImagesByIds(ids)
       descriptions = images.map((image, index) => `Image ${index}: ${image.description}\n-----`).join("\n")
     }
     const response = await this.aiService.chatCompletionWithTemplate(
       templateString,
       {
         prompt,
-        ...(ids.length > 0 ? {descriptions} : {})
+        ...(ids.length > 0 ? { descriptions } : {})
       },
       { model: "gpt-4o", temperature: 1 }
     )
 
     const parsed = JSON.parse(response.content)
-    return parsed.refinedPrompt
+    if (parsed.hasText) {
+      const templatePathText = path.join(__dirname, "../../templates/make-text.template.txt")
+      const templateStringText = fs.readFileSync(templatePathText, "utf-8")
+      const responseText = await this.aiService.chatCompletionWithTemplate(
+        templateStringText,
+        {
+          refinedImagePrompt: parsed.refinedPrompt,
+          originalUserPrompt: prompt
+        },
+        { model: "gpt-4o", temperature: 1 }
+      )
+      const parsedText = JSON.parse(responseText.content)
+      promptText = parsedText.textVisualDescription
+    }
+    console.log({
+      refinedPrompt: parsed.refinedPrompt,
+      ...(promptText ? {promptText} : {})
+    })
+    return {
+      refinedPrompt: parsed.refinedPrompt,
+      ...(promptText ? {promptText} : {})
+    } 
   }
 
   private async handleConfig(idUser: string) {

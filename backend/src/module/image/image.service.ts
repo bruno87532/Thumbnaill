@@ -6,6 +6,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { ConfigService } from "@nestjs/config";
 import { AiService } from "../ai/ai.service";
+import { saveImage } from "src/common/functions/save-image";
 
 @Injectable()
 export class ImageService {
@@ -20,7 +21,7 @@ export class ImageService {
     if (files.length === 0) throw new BadRequestException("File is required")
     const results = await Promise.all(
       files.map(async (file) => {
-        // const description = await this.handleTemporaryImage(files[0])
+        const description = await this.handleTemporaryImage(file)
         const key = `${idUser}-${uuid()}`
         const uploadParams = {
           Key: key,
@@ -33,6 +34,7 @@ export class ImageService {
           data: {
             id: key,
             idUser,
+            description
           }
         })
 
@@ -51,16 +53,10 @@ export class ImageService {
   }
 
   private async handleTemporaryImage(file: Express.Multer.File) {
-    const server = this.configService.get<string>("SERVER_IMG")
-    const uploadPath = path.join(process.cwd(), "./images")
-    const fileName = `${new Date().getTime()}-${uuid()}.png`
-    const filePath = path.join(uploadPath, fileName)
-    await fs.promises.mkdir(uploadPath, { recursive: true })
-    await fs.promises.writeFile(filePath, file.buffer)
+    const urlImage = await saveImage(this.configService, file)
 
     const templatePath = path.join(process.cwd(), "./src/templates/describe-image.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
-    const urlImage = `${server}/images/${fileName}`
     const response = await this.aiService.chatCompletionWithImage(templateString, urlImage, {
       model: "gpt-4o",
       temperature: 0

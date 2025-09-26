@@ -14,17 +14,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Search, Download, Trash2, MoreVertical, Eye } from "lucide-react"
+import { Search, Download, Trash2, MoreVertical, Eye, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { ImageService } from "@/services/image.service"
-import { Loader2 } from "lucide-react"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { useImage } from "../../context/use-image"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 export function Gallery() {
-  const { urlImages, setUrlImages } = useImage()
+  const { urlImages, setUrlImages, isLoading } = useImage()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<string | null>(null)
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
@@ -86,7 +85,7 @@ export function Gallery() {
       </div>
 
       {
-        false ? (
+        isLoading ? (
           <div className="flex justify-center items-center min-h-screen">
             <Loader2 className="w-10 h-10 animate-spin" />
           </div>

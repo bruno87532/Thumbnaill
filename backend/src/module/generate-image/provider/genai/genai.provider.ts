@@ -9,8 +9,9 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
     @Inject("GOOGLE_CLIENT") private readonly googleClient: GoogleGenAI,
   ) { }
 
-  async createImage(
+  async createImage(data: {
     prompt: string,
+    aspectRatioText: string,
     categories: {
       category: HarmCategory,
       threshold: HarmBlockThreshold
@@ -19,8 +20,9 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
       mimeType: "image/png" | "image/jpeg" | "image/webp",
       data: string
     }[],
-    mediaResolution: MediaResolution
-  ): Promise<{
+    mediaResolution: MediaResolution,
+    promptText?: string,
+  }): Promise<{
     data: Buffer<ArrayBuffer>
   } | undefined> {
     try {
@@ -30,8 +32,10 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
           {
             role: "user",
             parts: [
-              { text: prompt },
-              ...inlineData.map((img) => ({
+              { text: data.prompt },
+              { text: data.aspectRatioText },
+              ...(data.promptText ? [{ text: data.promptText }] : []),
+              ...data.inlineData.map((img) => ({
                 inlineData: {
                   mimeType: img.mimeType,
                   data: img.data
@@ -43,15 +47,14 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
         config: {
           responseModalities: ["IMAGE", "TEXT"],
           safetySettings: [
-            ...categories
+
+            ...data.categories
           ],
-          mediaResolution,
+          mediaResolution: data.mediaResolution,
         },
       });
-
       const candidate = response.candidates?.[0];
       if (!candidate) throw new NotFoundException("Candidate not found")
-
       const content = candidate.content;
       if (!content?.parts || content?.parts.length === 0) throw new NotFoundException("Content not found")
 
@@ -67,8 +70,8 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
         }
       }
     } catch (error) {
+      console.error("An error ocurred while creating image with prompt", data.prompt, error)
       if (error instanceof HttpException) throw error
-      console.error("An error ocurred while creating image with prompt", prompt, error)
       throw new InternalServerErrorException("An error ocurred while creating image with prompt")
     }
   }

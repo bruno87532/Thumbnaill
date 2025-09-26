@@ -1,1 +1,1 @@
-export type Pages = "dashboard" | "gallery" | "history" | "settings" | "upload"
+export type Pages = "dashboard" | "gallery" | "history" | "settings" | "upload" | "describe-thumb"
