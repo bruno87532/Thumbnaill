@@ -12,6 +12,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { S3Service } from "../s3/s3.service";
 import { v4 as uuid } from "uuid"
 import { AspectRatioService } from "../ratio/aspect-ratio.service";
+import { ImprovePromptDto } from "./dto/improve-prompt.dto";
 
 @Injectable()
 export class ThumbnaillService {
@@ -27,7 +28,6 @@ export class ThumbnaillService {
 
   async createThumbnaill(data: CreateThumbnaillDto, idUser: string) {
     try {
-      const refinedPrompt = await this.handlePrompt(data.prompt, data.ids)
       const aspectRatio = await this.aspectRatioService.getAspectRatioByTypePost(data.aspectRatio)
       const size = await this.s3Service.getImage({
         Key: aspectRatio.id
@@ -42,12 +42,11 @@ export class ThumbnaillService {
 
       const aspectRatioText = data.ids.length > 0 ? "\n Use the transparent image as the reference for final aspect ratio and fill the area that wasn't shown in the original picture. If you are going to resize, you must maintain the exact aspect ratio of the transparent image. The image must not have black, transparent borders or a checkerboard transparency pattern." : " Use the transparent image as the reference for final aspect ratio. If you are going to resize, you must maintain the exact aspect ratio of the transparent image. The image must not have black, transparent borders or a checkerboard transparency pattern."
       const thumbnaill = await this.generateImageService.createImage({
-        prompt: refinedPrompt.refinedPrompt,
+        prompt: data.prompt,
         aspectRatioText,
         categories: settings,
         mediaResolution: configWithQuality,
         inlineData,
-        ...(refinedPrompt.promptText ? {promptText: refinedPrompt.promptText} : {})
       })
       let id = ""
 
@@ -80,6 +79,37 @@ export class ThumbnaillService {
       console.error("An error ocurred while creating thumbnaill with prompt", data.prompt, error)
       if (error instanceof HttpException) throw error
       throw new InternalServerErrorException("An error ocurred while creating thumbnaill with prompt")
+    }
+  }
+
+  async improvePrompt(data: ImprovePromptDto) {
+    try {
+      const templatePath = data.ids.length > 0 ?
+        path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
+        path.join(__dirname, "../../templates/refine-prompt.template.txt")
+      const templateString = fs.readFileSync(templatePath, "utf-8")
+
+      let descriptions = ""
+      if (data.ids.length > 0) {
+        const { images } = await this.imageService.getImagesByIds(data.ids)
+        descriptions = images.map((image, index) => `Image ${index}: ${image.description}\n-----`).join("\n")
+      }
+      const response = await this.aiService.chatCompletionWithTemplate(
+        templateString,
+        {
+          prompt: data.prompt,
+          ...(data.ids.length > 0 ? { descriptions } : {})
+        },
+        { model: "gpt-4o", temperature: 1 }
+      )
+
+      const parsed = JSON.parse(response.content)
+      return {
+        refinedPrompt: parsed.refinedPrompt
+      }
+    } catch (error) {
+      console.error("An error ocurred while improving prompt", error)
+      throw new InternalServerErrorException("An error ocurred while improving prompt")
     }
   }
 
@@ -141,14 +171,10 @@ export class ThumbnaillService {
       const parsedText = JSON.parse(responseText.content)
       promptText = parsedText.textVisualDescription
     }
-    console.log({
-      refinedPrompt: parsed.refinedPrompt,
-      ...(promptText ? {promptText} : {})
-    })
     return {
       refinedPrompt: parsed.refinedPrompt,
-      ...(promptText ? {promptText} : {})
-    } 
+      ...(promptText ? { promptText } : {})
+    }
   }
 
   private async handleConfig(idUser: string) {

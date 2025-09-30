@@ -57,10 +57,12 @@ export class ImageService {
 
     const templatePath = path.join(process.cwd(), "./src/templates/describe-image.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
+    console.log(templateString)
     const response = await this.aiService.chatCompletionWithImage(templateString, urlImage, {
       model: "gpt-4o",
       temperature: 0
     })
+    console.log(response.content)
     const parsed = JSON.parse(response.content)
 
     return parsed.response

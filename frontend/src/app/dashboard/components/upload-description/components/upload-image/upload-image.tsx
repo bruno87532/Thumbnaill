@@ -7,87 +7,17 @@ import { Upload, ImageIcon, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { FormField, Form, FormMessage, FormControl, FormItem } from "@/components/ui/form"
-import { ImageSchema } from "./schema/thumbnail-schema"
-import type { ImageSchemaType } from "./schema/thumbnail-schema"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Zap } from "lucide-react"
-import { ImageService } from "@/services/image.service"
-import { toast } from "sonner"
-import { useImage } from "../../context/use-image"
+import { useImage } from "@/app/dashboard/context/use-image"
+import { useUploadImage } from "./hook/use-upload-image"
 
 export const UploadImage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [uploadedImages, setUploadedImages] = useState<{ file: File; preview: string }[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const { urlImages, setUrlImages } = useImage()
 
-  const form = useForm({
-    resolver: zodResolver(ImageSchema),
-    defaultValues: {
-      files: [],
-    },
-  })
-
-  const handleSubmit = async (data: ImageSchemaType) => {
-    setIsLoading(true)
-    const response = await ImageService.createImage(data.files)
-    setUrlImages((prev) => {
-      return [
-        ...response.imagesFile.map((image, index) => {
-          const uint8 = new Uint8Array(image.buffer.data)
-          const blob = new Blob([uint8], { type: image.buffer.ContentType })
-          const url = URL.createObjectURL(blob)
-          return {
-            url,
-            id: response.images[index].id
-          }
-        }),
-        ...prev
-      ]
-    })
-    toast("Imagens salvas", {
-      description: "Imagens salvas com sucesso",
-      action: {
-        label: "Feito",
-        onClick: () => null,
-      },
-    })
-    setIsLoading(false)
-    form.setValue("files", [])
-    setUploadedImages((prev) => {
-      uploadedImages.map((image) => URL.revokeObjectURL(image.preview))
-      return []
-    })
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
-
-    const newImages: { file: File; preview: string }[] = []
-
-    for (const file of Array.from(files)) {
-      const preview = URL.createObjectURL(file)
-      newImages.push({ file, preview })
-    }
-
-    setUploadedImages((prev) => [...prev, ...newImages])
-  }
-
-  const removeImage = (index: number) => {
-    setUploadedImages((prev) => {
-      const newImages = [...prev]
-      URL.revokeObjectURL(newImages[index].preview)
-      newImages.splice(index, 1)
-      return newImages
-    })
-
-    const currentFiles = form.getValues("files")
-    const newFiles = currentFiles.filter((_, i) => i !== index)
-    form.setValue("files", newFiles)
-  }
+  const { form, handleSubmit, handleImageUpload, removeImage } = useUploadImage(setIsLoading, setUploadedImages)
 
   return (
     <Card className="gradient-card neon-glow-hover">

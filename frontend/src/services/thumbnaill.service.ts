@@ -1,11 +1,11 @@
 import axios from "axios"
-import { AspectRatio } from "@/app/dashboard/components/prompt/schema/prompt.schema"
+import { AspectRatio } from "@/app/dashboard/components/upload-description/components/prompt/schema/prompt.schema"
 
 export class ThumbnaillService {
   private static pathBackend = process.env.NEXT_PUBLIC_BACKEND
 
-  static async createThumbnaill(data: { 
-    ids: string[], 
+  static async createThumbnaill(data: {
+    ids: string[],
     prompt: string,
     aspectRatio: AspectRatio
   }): Promise<{
@@ -23,6 +23,26 @@ export class ThumbnaillService {
     return {
       data: response.data.buffer.data,
       thumbnaill: response.data.thumbnaill
+    }
+  }
+
+  static async improvePrompt(
+    data: {
+      ids: string[],
+      prompt: string
+    }
+  ): Promise<{
+    refinedPrompt: string
+  }> {
+    const response = await axios.post(this.pathBackend + "/thumbnaill/improve-prompt", data, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      withCredentials: true
+    })
+
+    return {
+      refinedPrompt: response.data.refinedPrompt
     }
   }
 

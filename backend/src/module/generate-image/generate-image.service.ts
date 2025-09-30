@@ -18,7 +18,6 @@ export class GenerateImageService {
       data: string
     }[],
     mediaResolution: MediaResolution,
-    promptText?: string,
   }) {
     return await this.generateImageProvider.createImage(data)
   }

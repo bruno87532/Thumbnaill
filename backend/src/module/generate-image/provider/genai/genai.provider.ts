@@ -21,10 +21,21 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
       data: string
     }[],
     mediaResolution: MediaResolution,
-    promptText?: string,
   }): Promise<{
     data: Buffer<ArrayBuffer>
   } | undefined> {
+    console.log({
+      parts: [
+        { text: data.prompt },
+        { text: data.aspectRatioText },
+        ...data.inlineData.map((img) => ({
+          inlineData: {
+            mimeType: img.mimeType,
+            data: img.data
+          }
+        }))
+      ],
+    })
     try {
       const response = await this.googleClient.models.generateContent({
         model: "gemini-2.5-flash-image-preview",
@@ -34,7 +45,6 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
             parts: [
               { text: data.prompt },
               { text: data.aspectRatioText },
-              ...(data.promptText ? [{ text: data.promptText }] : []),
               ...data.inlineData.map((img) => ({
                 inlineData: {
                   mimeType: img.mimeType,

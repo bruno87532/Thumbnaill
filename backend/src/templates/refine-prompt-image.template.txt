@@ -32,6 +32,8 @@ Rules
   - Always suggest composition cues: rule of thirds, centered focus, balance of negative space.  
   - Reinforce how the described image integrates with or enhances the user’s textual intent.
 
+- Always return the improved prompt in Portuguese
+
 Return only in JSON:
   "refinedPrompt": your rewritten refined directive here
 

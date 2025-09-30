@@ -14,7 +14,6 @@ export class DescribeThumbnaillService {
       },
       withCredentials: true
     })
-
     return {
       response: response.data.response
     }

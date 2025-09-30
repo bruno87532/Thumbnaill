@@ -15,9 +15,8 @@ export class DescribeThumbnaillService {
   async describeImage(image: Express.Multer.File) {
     try {
       const urlImage = await saveImage(this.configService, image)
-      const templatePath = path.join(__dirname, "../../templates/describe-thumbnaill.template.txt")
+      const templatePath = path.join(__dirname, "../../templates/describe-image.template.txt")
       const templateString = fs.readFileSync(templatePath, "utf-8")
-      console.log(templateString)
       const response = await this.aiService.chatCompletionWithImage(
         templateString, 
         urlImage,
@@ -26,11 +25,9 @@ export class DescribeThumbnaillService {
           temperature: 0.0
         } 
       )
-      console.log(response.content)
       const parsed = JSON.parse(response.content)
-
       return {
-        response: parsed.description
+        response: parsed.response
       }
     } catch (error) {
       console.error("An error ocurred while describing image", error)

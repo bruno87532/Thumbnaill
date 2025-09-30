@@ -13,6 +13,5 @@ export abstract class GenerateImageProviderAbstract {
       data: string
     }[],
     mediaResolution: MediaResolution,
-    promptText?: string,
   })
 }

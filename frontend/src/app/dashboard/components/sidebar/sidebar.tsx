@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, User, LucideIcon, Pencil } from "lucide-react"
+import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, User, LucideIcon, Pencil, Text, GalleryThumbnails, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Pages } from "@/common/types/pages"
 
@@ -48,6 +48,18 @@ const menuItems: {
     label: "Descrever Thumbnaill",
     icon: Pencil,
     description: "Descrever thumbnaill detalhadamente"
+  },
+  {
+    id: "create-text",
+    label: "Criar Texto",
+    description: "Criar texto para thumbnaill",
+    icon: Text
+  },
+  {
+    id: "photo-editor",
+    label: "Editar Foto",
+    description: "Edições de fotos para suas thumbnaills",
+    icon: ImageIcon
   }
 ]
 

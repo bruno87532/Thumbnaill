@@ -6,86 +6,39 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Check } from "lucide-react"
-import { useImage } from "../../context/use-image"
-import { PromptSchema, type PromptSchemaType } from "./schema/prompt.schema"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useImage } from "../../../../context/use-image"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form"
-import { ThumbnaillService } from "@/services/thumbnaill.service"
-import { toast } from "sonner"
-import { useThumbnaill } from "../../context/use-thumbnaill"
-import { AspectRatio } from "./schema/prompt.schema"
+import { usePrompt } from "./hook/use-prompt"
 
 export const Prompt = () => {
-  const form = useForm<PromptSchemaType>({
-    resolver: zodResolver(PromptSchema),
-    defaultValues: {
-      prompt: "",
-      aspectRatio: AspectRatio.YOUTUBE,
-    },
-  })
-
-  const optionsAspectRatio = {
-    "Youtube (16:9)": AspectRatio.YOUTUBE,
-    "Reels e TikTok (9:16)": AspectRatio.INSTAGRAM_TIKTOK,
-    "Post do Instagram (1:1)": AspectRatio.INSTAGRAM_POST,
-    "Foto do Instagram (4:5)": AspectRatio.INSTAGRAM_PORTRAIT,
-    "Cinemático (21:9)": AspectRatio.CINEMATIC,
-    "Pinterest (3:4)": AspectRatio.PINTEREST,
-  }
-
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
-  const [generatedThumbnail, setGeneratedThumbnail] = useState<Uint8Array | null>(null)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+  const [improvedPrompt, setImprovedPrompt] = useState("")
+  const [isLoadingImprovement, setIsLoadingImprovement] = useState(false)
+  const [showImprovedPrompt, setShowImprovedPrompt] = useState(false)
+  const [isImprovementClicked, setIsImprovementClicked] = useState<boolean>(false)
+
+  const {
+    form,
+    handleImprovePrompt,
+    handleSubmit,
+    optionsAspectRatio,
+    toggleImageSelection
+  } = usePrompt(
+    selectedImages,
+    improvedPrompt,
+    setSelectedImages,
+    setIsLoadingImprovement,
+    setIsImprovementClicked,
+    setImprovedPrompt,
+    setShowImprovedPrompt,
+    setIsLoadingSubmit,
+    setThumbnailUrl,
+  )
+
   const { urlImages } = useImage()
-  const { setUrlThumbnaills, setCount } = useThumbnaill()
-
-  const toggleImageSelection = (imageId: string) => {
-    setSelectedImages((prev) => (prev.includes(imageId) ? prev.filter((id) => id !== imageId) : [...prev, imageId]))
-  }
-
-  const handleSubmit = async (data: PromptSchemaType) => {
-    setIsLoadingSubmit(true)
-    try {
-      const result = await ThumbnaillService.createThumbnaill({
-        ids: selectedImages,
-        prompt: data.prompt,
-        aspectRatio: data.aspectRatio
-      })
-
-      if (result && result.data) {
-        const uint8 = new Uint8Array(result.data)
-        setGeneratedThumbnail(uint8)
-        const blob = new Blob([uint8], { type: "image/png" })
-        const url = URL.createObjectURL(blob)
-        setThumbnailUrl(url)
-
-        setCount((prev) => prev + 1)
-        setUrlThumbnaills((prev) => {
-          return [
-            ...prev,
-            {
-              id: result.thumbnaill.id,
-              url
-            }
-          ]
-        })
-
-      }
-    } catch (error) {
-      toast("Ocorreu um erro durante a geração da thumbnaill", {
-        description: "Ocorreu um erro inesperado durante o processo de geração. Por favor tente novamente mais tarde.",
-        action: {
-          label: "Feito",
-          onClick: () => null,
-        },
-      })
-    } finally {
-      setIsLoadingSubmit(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -96,7 +49,11 @@ export const Prompt = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} id="prompt-form" className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              id="prompt-form"
+              className="space-y-6"
+            >
               <FormField
                 control={form.control}
                 name="aspectRatio"
@@ -137,8 +94,31 @@ export const Prompt = () => {
                   </FormItem>
                 )}
               />
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleImprovePrompt}
+                  disabled={isLoadingImprovement}
+                  className="cursor-pointer"
+                >
+                  {isLoadingImprovement ? "Melhorando Prompt..." : "Melhorar Prompt (Opcional)"}
+                </Button>
+              </div>
             </form>
           </Form>
+          {showImprovedPrompt && improvedPrompt && (
+            <div className="mt-6 space-y-4">
+              <Label className="text-sm font-medium">Prompt Melhorado:</Label>
+              <Textarea
+                value={improvedPrompt}
+                onChange={(e) => setImprovedPrompt(e.target.value)}
+                className="min-h-[120px] text-base"
+                placeholder="Prompt melhorado aparecerá aqui..."
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -173,7 +153,6 @@ export const Prompt = () => {
               </div>
             ))}
           </div>
-
           {selectedImages.length > 0 && (
             <div className="mt-4 p-3 bg-muted/50 rounded-lg">
               <Label className="text-sm font-medium">{selectedImages.length} imagem(ns) selecionada(s)</Label>
@@ -201,7 +180,7 @@ export const Prompt = () => {
             <div className="mt-4 flex justify-center gap-2">
               <Button
                 variant="outline"
-                className="cursor-pointer"
+                className="cursor-pointer bg-transparent"
                 onClick={() => {
                   const link = document.createElement("a")
                   link.href = thumbnailUrl
@@ -216,15 +195,35 @@ export const Prompt = () => {
         </Card>
       )}
 
-      <div className="flex justify-end">
-        <Button
-          disabled={isLoadingSubmit}
-          className="min-w-[140px] cursor-pointer"
-          type="submit"
-          form="prompt-form"
-        >
-          {isLoadingSubmit ? "Gerando..." : "Gerar Thumbnail"}
-        </Button>
+      <div className="flex justify-end gap-2">
+        {showImprovedPrompt && improvedPrompt && (
+          <>
+            <Button
+              disabled={isLoadingSubmit}
+              variant="outline"
+              className="min-w-[140px] cursor-pointer bg-transparent"
+              type="submit"
+              form="prompt-form"
+              id="without-improvement"
+            >
+              {isLoadingSubmit ? "Gerando..." : "Gerar sem melhoria"}
+            </Button>
+            <Button
+              type="submit"
+              form="prompt-form"
+              disabled={isLoadingSubmit}
+              className="min-w-[140px] cursor-pointer"
+              id="with-improvement"
+            >
+              {isLoadingSubmit ? "Gerando..." : "Gerar com melhoria"}
+            </Button>
+          </>
+        )}
+        {!isImprovementClicked && (
+          <Button disabled={isLoadingSubmit} className="min-w-[140px] cursor-pointer" type="submit" form="prompt-form">
+            {isLoadingSubmit ? "Gerando..." : "Gerar Thumbnail"}
+          </Button>
+        )}
       </div>
     </div>
   )
