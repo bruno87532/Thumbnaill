@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Check } from "lucide-react"
-import { useImage } from "../../../../context/use-image"
+import { useImage } from "@/app/dashboard/context/use-image"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormControl, FormField, FormItem, FormMessage, Form, FormLabel } from "@/components/ui/form"
 import { usePrompt } from "./hook/use-prompt"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export const Prompt = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([])
@@ -19,14 +20,10 @@ export const Prompt = () => {
   const [isLoadingImprovement, setIsLoadingImprovement] = useState(false)
   const [showImprovedPrompt, setShowImprovedPrompt] = useState(false)
   const [isImprovementClicked, setIsImprovementClicked] = useState<boolean>(false)
+  const [selectedModel, setSelectedModel] = useState<string>("")
+  const [modelError, setModelError] = useState<string>("")
 
-  const {
-    form,
-    handleImprovePrompt,
-    handleSubmit,
-    optionsAspectRatio,
-    toggleImageSelection
-  } = usePrompt(
+  const { form, handleImprovePrompt, handleSubmit, optionsAspectRatio, toggleImageSelection, handleImprovePromptClick } = usePrompt(
     selectedImages,
     improvedPrompt,
     setSelectedImages,
@@ -36,12 +33,21 @@ export const Prompt = () => {
     setShowImprovedPrompt,
     setIsLoadingSubmit,
     setThumbnailUrl,
+    selectedModel,
+    setModelError
   )
 
   const { urlImages } = useImage()
 
   return (
     <div className="space-y-6">
+      <Alert>
+        <AlertDescription className="text-sm">
+          Melhoramos o seu Prompt com modelo de inteligência artificial avançado, se optar por esta opção, este processo
+          levará alguns segundos.
+        </AlertDescription>
+      </Alert>
+
       <Card className="gradient-card neon-glow-hover">
         <CardHeader>
           <CardTitle className="text-primary">Prompt Principal</CardTitle>
@@ -49,11 +55,7 @@ export const Prompt = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              id="prompt-form"
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(handleSubmit)} id="prompt-form" className="space-y-6">
               <FormField
                 control={form.control}
                 name="aspectRatio"
@@ -78,6 +80,7 @@ export const Prompt = () => {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="prompt"
@@ -94,18 +97,48 @@ export const Prompt = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex items-center space-x-2">
+              <div className="flex items-end gap-3">
+                <div className="flex flex-col">
+                  <Label htmlFor="model-select" className="mb-2">
+                    Modelo de IA (para melhorar prompt)
+                  </Label>
+
+                  <Select
+                    value={selectedModel}
+                    onValueChange={(value) => {
+                      setSelectedModel(value)
+                      setModelError("")
+                    }}
+                  >
+                    <SelectTrigger id="model-select" className="w-64 h-9">
+                      <SelectValue placeholder="Selecione o modelo de IA" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gpt-5">
+                        Mais detalhado (mais demorado)
+                      </SelectItem>
+                      <SelectItem value="gpt-4o">
+                        Mais objetivo (mais rápido)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={handleImprovePrompt}
+                  onClick={handleImprovePromptClick}
                   disabled={isLoadingImprovement}
-                  className="cursor-pointer"
+                  className="cursor-pointer bg-transparent h-9"
                 >
                   {isLoadingImprovement ? "Melhorando Prompt..." : "Melhorar Prompt (Opcional)"}
                 </Button>
               </div>
+
+              {modelError && (
+                <p className="mt-2 text-sm text-destructive">{modelError}</p>
+              )}
             </form>
           </Form>
           {showImprovedPrompt && improvedPrompt && (
@@ -180,7 +213,7 @@ export const Prompt = () => {
             <div className="mt-4 flex justify-center gap-2">
               <Button
                 variant="outline"
-                className="cursor-pointer bg-transparent"
+                className="min-w-[140px] cursor-pointer bg-transparent"
                 onClick={() => {
                   const link = document.createElement("a")
                   link.href = thumbnailUrl

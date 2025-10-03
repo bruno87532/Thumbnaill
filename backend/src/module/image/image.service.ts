@@ -55,15 +55,20 @@ export class ImageService {
   private async handleTemporaryImage(file: Express.Multer.File) {
     const urlImage = await saveImage(this.configService, file)
 
-    const templatePath = path.join(process.cwd(), "./src/templates/describe-image.template.txt")
+    const templatePath = path.join(process.cwd(), "./src/templates/description-image.template.txt")
     const templateString = fs.readFileSync(templatePath, "utf-8")
-    console.log(templateString)
     const response = await this.aiService.chatCompletionWithImage(templateString, urlImage, {
-      model: "gpt-4o",
-      temperature: 0
+      model: "gpt-5",
     })
-    console.log(response.content)
-    const parsed = JSON.parse(response.content)
+
+    let parsed = {
+      response: "",
+    }
+    try {
+      parsed = JSON.parse(response.content)
+    } catch {
+      return this.handleTemporaryImage(file)
+    }
 
     return parsed.response
   }

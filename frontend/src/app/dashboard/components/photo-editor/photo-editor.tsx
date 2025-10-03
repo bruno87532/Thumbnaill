@@ -20,6 +20,7 @@ export const PhotoEditor = () => {
   const backgroundInputRef = useRef<HTMLInputElement>(null)
   const layerInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 800, height: 600 })
 
   const {
     deleteLayer,
@@ -36,7 +37,9 @@ export const PhotoEditor = () => {
     selectedLayerId,
     setLayers,
     layers,
-    layerInputRef
+    layerInputRef,
+    canvasDimensions,
+    setCanvasDimensions
   )
 
   return (
@@ -124,7 +127,7 @@ export const PhotoEditor = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center bg-muted/30 rounded-lg p-8">
+            <div className="flex items-start justify-center bg-muted/30 rounded-lg p-8 overflow-auto max-h-[800px]">
               <Canvas
                 ref={canvasRef}
                 backgroundImage={backgroundImage}
@@ -132,6 +135,7 @@ export const PhotoEditor = () => {
                 selectedLayerId={selectedLayerId}
                 onSelectLayer={setSelectedLayerId}
                 onUpdateLayer={updateLayer}
+                canvasDimensions={canvasDimensions}
               />
             </div>
           </CardContent>

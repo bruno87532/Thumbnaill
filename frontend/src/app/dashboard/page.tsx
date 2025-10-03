@@ -6,7 +6,7 @@ import { UploadDescription } from "./components/upload-description/upload-descri
 import { Gallery } from "./components/gallery/gallery"
 import { Sparkles } from "lucide-react"
 import { Settings as SettingsComponent } from "./components/settings/settings"
-import { Thumbnaill } from "./components/history/history"
+import { History } from "./components/history/history"
 import type { Pages } from "@/common/types/pages"
 import { DescribeThumb } from "./components/describe-thumb/describe-thumb"
 import { Home } from "./components/home/home"
@@ -25,7 +25,7 @@ const ThumbnailDashboard = () => {
       case "gallery":
         return <Gallery />
       case "history":
-        return <Thumbnaill />
+        return <History />
       case "settings":
         return <SettingsComponent />
       case "describe-thumb":

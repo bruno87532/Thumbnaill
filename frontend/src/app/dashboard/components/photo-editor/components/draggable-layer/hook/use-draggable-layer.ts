@@ -59,21 +59,21 @@ export const useDraggableLayer = (
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging && dragStartPos.current) {
+      if (isDragging) {
         const newX = e.clientX - dragStartPos.current.x
         const newY = e.clientY - dragStartPos.current.y
         onUpdate({
-          x: Math.max(0, Math.min(800 - layer.width, newX)),
-          y: Math.max(0, Math.min(600 - layer.height, newY)),
+          x: newX,
+          y: newY,
         })
-      } else if (isResizing && resizeStartData.current) {
+      } else if (isResizing) {
         const deltaX = e.clientX - resizeStartData.current.x
         const deltaY = e.clientY - resizeStartData.current.y
         const delta = Math.max(deltaX, deltaY)
         const newWidth = Math.max(50, resizeStartData.current.width + delta)
         const newHeight = Math.max(50, resizeStartData.current.height + delta)
         onUpdate({ width: newWidth, height: newHeight })
-      } else if (isRotating && rotateStartAngle.current != null) {
+      } else if (isRotating) {
         const rect = layerRef.current?.getBoundingClientRect()
         if (rect) {
           const centerX = rect.left + rect.width / 2

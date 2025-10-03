@@ -1,0 +1,1 @@
+export type Models = "gpt-5" | "gpt-4o"

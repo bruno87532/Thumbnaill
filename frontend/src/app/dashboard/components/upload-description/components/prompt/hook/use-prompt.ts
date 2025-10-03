@@ -19,6 +19,8 @@ export const usePrompt = (
   setShowImprovedPrompt: React.Dispatch<React.SetStateAction<boolean>>,
   setIsLoadingSubmit: React.Dispatch<React.SetStateAction<boolean>>,
   setThumbnailUrl: React.Dispatch<React.SetStateAction<string | null>>,
+  selectedModel: string,
+  setModelError: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const { setCount, setUrlThumbnaills } = useThumbnaill()
 
@@ -29,6 +31,15 @@ export const usePrompt = (
       aspectRatio: AspectRatio.YOUTUBE,
     },
   })
+
+  const handleImprovePromptClick = () => {
+    if (!selectedModel) {
+      setModelError("Por favor, selecione um modelo antes de melhorar o prompt")
+      return
+    }
+    setModelError("")
+    handleImprovePrompt()
+  }
 
   const optionsAspectRatio = {
     "Youtube (16:9)": AspectRatio.YOUTUBE,
@@ -63,7 +74,7 @@ export const usePrompt = (
 
       setImprovedPrompt(refinedPrompt)
       setShowImprovedPrompt(true)
-    } catch (error) {
+    } catch {
       toast("Erro ao melhorar prompt", {
         description: "Ocorreu um erro ao tentar melhorar o prompt. Tente novamente.",
       })
@@ -107,9 +118,9 @@ export const usePrompt = (
           ]
         })
       }
-    } catch (error) {
+    } catch {
       toast("Ocorreu um erro durante a geração da thumbnaill", {
-        description: "Ocorreu um erro inesperado durante o processo de geração. Por favor tente novamente mais tarde.",
+        description: "Ocorreu um erro inesperado durante o processo de geração. Motivo: Instabilidade na inteligência artificial que gera as imagens.",
         action: {
           label: "Feito",
           onClick: () => null,
@@ -125,6 +136,7 @@ export const usePrompt = (
     optionsAspectRatio,
     toggleImageSelection,
     handleImprovePrompt,
-    handleSubmit
+    handleSubmit,
+    handleImprovePromptClick
   }
 }

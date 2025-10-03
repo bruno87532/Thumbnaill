@@ -88,19 +88,18 @@ export class ThumbnaillService {
         path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
         path.join(__dirname, "../../templates/refine-prompt.template.txt")
       const templateString = fs.readFileSync(templatePath, "utf-8")
-
+      
       let descriptions = ""
       if (data.ids.length > 0) {
         const { images } = await this.imageService.getImagesByIds(data.ids)
-        descriptions = images.map((image, index) => `Image ${index}: ${image.description}\n-----`).join("\n")
+        descriptions = images.map((image, index) => `${index === 0 ? "\n----\n" : ""}Imagem ${index + 1}: ${image.description}\n-----`).join("\n")
       }
+      const prompt = templateString + data.prompt + (descriptions ?? "")
+      console.log(prompt)
       const response = await this.aiService.chatCompletionWithTemplate(
-        templateString,
-        {
-          prompt: data.prompt,
-          ...(data.ids.length > 0 ? { descriptions } : {})
-        },
-        { model: "gpt-4o", temperature: 1 }
+        prompt,
+        undefined,
+        { model: "gpt-5", temperature: 1 }
       )
 
       const parsed = JSON.parse(response.content)
@@ -130,51 +129,6 @@ export class ThumbnaillService {
     }
 
     return inlineData
-  }
-
-  private async handlePrompt(prompt: string, ids: string[]): Promise<{
-    refinedPrompt: string,
-    promptText?: string
-  }> {
-    const templatePath = ids.length > 0 ?
-      path.join(__dirname, "../../templates/refine-prompt-image.template.txt") :
-      path.join(__dirname, "../../templates/refine-prompt.template.txt")
-    const templateString = fs.readFileSync(templatePath, "utf-8")
-
-    let descriptions = ""
-    let promptText = ""
-    if (ids.length > 0) {
-      const { images } = await this.imageService.getImagesByIds(ids)
-      descriptions = images.map((image, index) => `Image ${index}: ${image.description}\n-----`).join("\n")
-    }
-    const response = await this.aiService.chatCompletionWithTemplate(
-      templateString,
-      {
-        prompt,
-        ...(ids.length > 0 ? { descriptions } : {})
-      },
-      { model: "gpt-4o", temperature: 1 }
-    )
-
-    const parsed = JSON.parse(response.content)
-    if (parsed.hasText) {
-      const templatePathText = path.join(__dirname, "../../templates/make-text.template.txt")
-      const templateStringText = fs.readFileSync(templatePathText, "utf-8")
-      const responseText = await this.aiService.chatCompletionWithTemplate(
-        templateStringText,
-        {
-          refinedImagePrompt: parsed.refinedPrompt,
-          originalUserPrompt: prompt
-        },
-        { model: "gpt-4o", temperature: 1 }
-      )
-      const parsedText = JSON.parse(responseText.content)
-      promptText = parsedText.textVisualDescription
-    }
-    return {
-      refinedPrompt: parsed.refinedPrompt,
-      ...(promptText ? { promptText } : {})
-    }
   }
 
   private async handleConfig(idUser: string) {

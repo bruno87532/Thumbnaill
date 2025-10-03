@@ -48,9 +48,9 @@ export const useUploadImage = (
         prev.map((image) => URL.revokeObjectURL(image.preview))
         return []
       })
-    } catch (error) {
-      toast("Ocorreu um erro durante a geração da thumbnaill", {
-        description: "Ocorreu um erro inesperado durante o processo de geração. Por favor tente novamente mais tarde.",
+    } catch {
+      toast("Ocorreu um erro durante o upload da imagem", {
+        description: "Ocorreu um erro inesperado durante o processo de upload. Por favor tente novamente mais tarde.",
         action: {
           label: "Feito",
           onClick: () => null,

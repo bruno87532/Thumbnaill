@@ -1,27 +1,14 @@
 "use client"
-
-import type React from "react"
-
 import { useState, useRef } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X, Copy, Check, ImageIcon, Loader2, Zap } from "lucide-react"
-import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
-import { Form, FormMessage, FormControl, FormField, FormItem } from "@/components/ui/form"
+import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Image from "next/image"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { DescribeThumbnaillService } from "@/services/describe-thumbnaill.service"
-
-const DescribeThumbSchema = z.object({
-  file: z.instanceof(File, {
-    message: "Por favor, selecione um arquivo de imagem válido.",
-  }),
-})
-
-type DescribeThumb = z.infer<typeof DescribeThumbSchema>
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useDescribeThumb } from "./hook/use-describe-thumb"
 
 export const DescribeThumb = () => {
   const [isLoading, setIsLoading] = useState(false)
@@ -30,55 +17,13 @@ export const DescribeThumb = () => {
   const [uploadedImages, setUploadedImages] = useState<{ file: File; preview: string } | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const form = useForm<DescribeThumb>({
-    resolver: zodResolver(DescribeThumbSchema),
-    defaultValues: {
-      file: undefined,
-    },
-  })
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    form.setValue("file", file)
-
-    const preview = URL.createObjectURL(file)
-    setUploadedImages({
-      file,
-      preview,
-    })
-  }
-
-  const handleSubmit = async (data: DescribeThumb) => {
-    setIsLoading(true)
-
-    const { response } = await DescribeThumbnaillService.describeThumbnaill(data.file)
-    setGeneratedPrompt(response)
-    setIsLoading(false)
-  }
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(generatedPrompt)
-      setCopied(true)
-      toast("Prompt copiado!", {
-        description: "O prompt foi copiado para a área de transferência.",
-        action: {
-          label: "Feito",
-          onClick: () => null,
-        },
-      })
-      setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      toast("Erro ao copiar", {
-        description: "Não foi possível copiar o prompt.",
-        action: {
-          label: "Feito",
-          onClick: () => null,
-        },
-      })
-    }
-  }
+  const { copyToClipboard, form, handleImageUpload, handleSubmit } = useDescribeThumb(
+    setUploadedImages,
+    setIsLoading,
+    setGeneratedPrompt,
+    setCopied,
+    generatedPrompt,
+  )
 
   return (
     <div className="space-y-6">
@@ -88,6 +33,18 @@ export const DescribeThumb = () => {
           Envie uma thumbnaill e receba um prompt para gerar semelhante
         </p>
       </div>
+
+      <Alert>
+        <AlertDescription className="text-sm">
+          Descrevemos a imagem com inteligência artificial, ela pode cometer erros. Considere revisar a descrição após a
+          sua geração. A inteligência artificial não reconhece famosos/figuras públicas, se disponível na imagem,
+          considere trocar sua descrição pelo seu nome.
+        </AlertDescription>
+        <AlertDescription className="text-sm">
+          Fazemos análise com modelos avançados de inteligência artificial. Este processo pode levar alguns segundos.
+        </AlertDescription>
+      </Alert>
+
       <Card className="gradient-card neon-glow-hover">
         <CardHeader>
           <CardTitle className="text-primary">Selecionar Imagem</CardTitle>
@@ -96,6 +53,28 @@ export const DescribeThumb = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit, (errors) => {})} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Análise</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um modelo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="gpt-5">Mais detalhada (mais demorado)</SelectItem>
+                        <SelectItem value="gpt-4o">Mais objetiva (mais rápida)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div
                 className="relative flex h-40 w-full items-center justify-center rounded-md border border-dashed border-border hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
@@ -136,22 +115,19 @@ export const DescribeThumb = () => {
                 control={form.control}
                 name="file"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <input
-                        className="hidden"
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            field.onChange(file)
-                            handleImageUpload(e)
-                          }
-                        }}
-                      />
-                    </FormControl>
+                  <FormItem className="hidden">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          field.onChange(file)
+                          handleImageUpload(e)
+                        }
+                      }}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

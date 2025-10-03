@@ -3,62 +3,35 @@ import { OpenAIProvider } from './providers/openai/openai.provider';
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { interfaceMessages } from 'src/common/interfaces/ai.interface';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { Models } from 'src/common/types/models';
 
 @Injectable()
 export class AiService {
   constructor(private readonly providerService: OpenAIProvider) { }
 
   async chatCompletionWithTemplate(
-    templateString: string,
-    inputVariables: Record<string, string>,
+    systemPrompt: string,
+    userPrompt?: string | undefined,
     options?: {
-      model?: "gpt-4o-mini" | "gpt-4o";
+      model?: "gpt-5";
       temperature?: number;
     },
-    additionalBeforeMessages?: interfaceMessages[],
-    additionalAfterMessages?: interfaceMessages[],
   ): Promise<{
     content: string;
   }> {
-    const loadedTemplate = ChatPromptTemplate.fromTemplate(templateString)
-    const formattedTemplate = await loadedTemplate.format({ ...inputVariables })
-    const message: BaseMessage[] = [
-      ...await Promise.all((additionalBeforeMessages || []).map(msg => this.toLangChainMessage(msg))),
-      await this.toLangChainMessage({ role: "user", content: formattedTemplate }),
-      ...await Promise.all((additionalAfterMessages || []).map(msg => this.toLangChainMessage(msg))),
-    ];
-    return await this.providerService.chatCompletionWithTemplate(
-      message,
-      options
-    );
+    return await this.providerService.chatCompletionWithTemplate(systemPrompt, userPrompt, options)
   }
 
   async chatCompletionWithImage(
     templateString: string,
     imageUrl: string,
     options?: {
-      model: "gpt-4o-mini" | "gpt-4o";
+      model: Models;
       temperature?: number;
     }
   ): Promise<{
     content: string;
   }> {
-    const loadedTemplate = ChatPromptTemplate.fromTemplate(templateString)
-    const formattedTemplate = await loadedTemplate.format({ })
-    return await this.providerService.chatCompletionWithImage(formattedTemplate, imageUrl, options)
-  }
-
-  private async toLangChainMessage(msg: {
-    role: "system" | "user" | "assistant",
-    content: string
-  }) {
-    switch (msg.role) {
-      case "system":
-        return new SystemMessage(msg.content)
-      case "user":
-        return new HumanMessage(msg.content)
-      case "assistant":
-        return new AIMessage(msg.content)
-    }
+    return await this.providerService.chatCompletionWithImage(templateString, imageUrl, options)
   }
 }

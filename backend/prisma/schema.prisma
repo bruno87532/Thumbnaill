@@ -10,10 +10,8 @@ datasource db {
 enum config {
   BLOCK_LOW_AND_ABOVE
   BLOCK_MEDIUM_AND_ABOVE
-  BLOCK_NONE
   BLOCK_ONLY_HIGH
-  HARM_BLOCK_THRESHOLD_UNSPECIFIED
-  OFF
+  BLOCK_NONE
 }
 
 enum quality {
@@ -53,11 +51,11 @@ model Image {
 
 model Config {
   id                     String  @id @default(uuid())
-  civicIntegrity         config  @default(OFF)
-  dangerousContent       config  @default(OFF)
-  harassmentIntimidation config  @default(OFF)
-  hateSpeech             config  @default(OFF)
-  sexual                 config  @default(OFF)
+  civicIntegrity         config  @default(BLOCK_NONE)
+  dangerousContent       config  @default(BLOCK_NONE)
+  harassmentIntimidation config  @default(BLOCK_NONE)
+  hateSpeech             config  @default(BLOCK_NONE)
+  sexual                 config  @default(BLOCK_NONE)
   qualityMode            quality @default(MEDIA_RESOLUTION_MEDIUM)
   idUser                 String  @unique
   user                   User    @relation(fields: [idUser], references: [id])

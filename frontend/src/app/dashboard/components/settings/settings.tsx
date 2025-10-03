@@ -5,76 +5,24 @@ import { Select, SelectItem, SelectContent, SelectValue, SelectTrigger } from "@
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
-import { SettingsSchema } from "./schema/settings.schema"
-import type { SettingsSchemaType } from "./schema/settings.schema"
 import { ConfigEnum, configEnumLabels, configLabels, QualityMode } from "@/common/types/config"
-import { ConfigService } from "@/services/config.service"
-import { toast } from "sonner"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useState } from "react"
-import { Zap, Sparkles } from "lucide-react"
+import { useState } from "react"
+import { Zap } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ConfigState } from "@/common/types/config-state"
+import { useSettings } from "./hook/use-settings"
 
 export const Settings = () => {
-  const [config, setConfig] = useState<{
-    civicIntegrity: ConfigEnum
-    dangerousContent: ConfigEnum
-    harassmentIntimidation: ConfigEnum
-    hateSpeech: ConfigEnum
-    sexual: ConfigEnum
-    qualityMode: QualityMode
-  }>({
-    civicIntegrity: ConfigEnum.OFF,
-    dangerousContent: ConfigEnum.OFF,
-    harassmentIntimidation: ConfigEnum.OFF,
-    hateSpeech: ConfigEnum.OFF,
-    sexual: ConfigEnum.OFF,
+  const [config, setConfig] = useState<ConfigState>({
+    civicIntegrity: ConfigEnum.BLOCK_NONE,
+    dangerousContent: ConfigEnum.BLOCK_NONE,
+    harassmentIntimidation: ConfigEnum.BLOCK_NONE,
+    hateSpeech: ConfigEnum.BLOCK_NONE,
+    sexual: ConfigEnum.BLOCK_NONE,
     qualityMode: QualityMode.MEDIA_RESOLUTION_MEDIUM,
   })
 
-  const form = useForm<SettingsSchemaType>({
-    resolver: zodResolver(SettingsSchema),
-    defaultValues: config,
-  })
-
-  useEffect(() => {
-    const getConfigByIdUser = async () => {
-      const cfg = await ConfigService.getConfigByIdUser()
-      setConfig({
-        civicIntegrity: cfg.civicIntegrity,
-        dangerousContent: cfg.dangerousContent,
-        harassmentIntimidation: cfg.harassmentIntimidation,
-        hateSpeech: cfg.hateSpeech,
-        sexual: cfg.sexual,
-        qualityMode: cfg.qualityMode,
-      })
-    }
-
-    getConfigByIdUser()
-  }, [])
-
-  useEffect(() => {
-    form.reset(config)
-  }, [config, form])
-
-  const handleSubmit = async (data: SettingsSchemaType) => {
-    await ConfigService.udpateConfig(data)
-    toast("Configurações atualizadas", {
-      description: "Configurações atualizadas com sucesso",
-      action: { label: "Feito", onClick: () => null },
-    })
-  }
-
-  const setAllConfigs = (value: ConfigEnum) => {
-    const configKeys: (keyof typeof configLabels)[] = [
-      "civicIntegrity",
-      "dangerousContent",
-      "harassmentIntimidation",
-      "hateSpeech",
-      "sexual",
-    ]
-    configKeys.forEach((key) => form.setValue(key, value))
-  }
+  const { handleSubmit, setAllConfigs, form } = useSettings(setConfig, config)
 
   return (
     <Form {...form}>
@@ -83,6 +31,15 @@ export const Settings = () => {
           <h1 className="text-3xl font-bold text-balance">Configurações Avançadas</h1>
           <p className="text-muted-foreground text-pretty">Configuração Individual por Categoria</p>
         </div>
+
+        <Alert>
+          <AlertDescription className="text-sm">
+            Estas configurações não garante que gerará ou bloqueará determinados tipos de conteúdos, pois a inteligência artificial bloquea internamente certo tipo de conteúdo. Porém estas configurações ajuda a tornar menos restritivo.
+          </AlertDescription>
+          <AlertDescription className="text-sm">
+            Recomendamos deixar tudo como &quot;Sem Bloqueio&quot;
+          </AlertDescription>
+        </Alert>
 
         <Card className="gradient-card neon-glow-hover">
           <CardHeader>
@@ -100,8 +57,8 @@ export const Settings = () => {
                       type="button"
                       variant={field.value === QualityMode.MEDIA_RESOLUTION_LOW ? "default" : "outline"}
                       className={`h-24 cursor-pointer flex-col gap-2 ${field.value === QualityMode.MEDIA_RESOLUTION_LOW
-                          ? "gradient-primary text-primary-foreground neon-glow"
-                          : ""
+                        ? "gradient-primary text-primary-foreground neon-glow"
+                        : ""
                         }`}
                       onClick={() => field.onChange(QualityMode.MEDIA_RESOLUTION_LOW)}
                     >
@@ -116,8 +73,8 @@ export const Settings = () => {
                       type="button"
                       variant={field.value === QualityMode.MEDIA_RESOLUTION_MEDIUM ? "default" : "outline"}
                       className={`h-24 cursor-pointer flex-col gap-2 ${field.value === QualityMode.MEDIA_RESOLUTION_MEDIUM
-                          ? "gradient-primary text-primary-foreground neon-glow"
-                          : ""
+                        ? "gradient-primary text-primary-foreground neon-glow"
+                        : ""
                         }`}
                       onClick={() => field.onChange(QualityMode.MEDIA_RESOLUTION_MEDIUM)}
                     >
@@ -178,9 +135,9 @@ export const Settings = () => {
               variant="outline"
               className="cursor-pointer bg-transparent"
               size="sm"
-              onClick={() => setAllConfigs(ConfigEnum.OFF)}
+              onClick={() => setAllConfigs(ConfigEnum.BLOCK_NONE)}
             >
-              Desativar Todos
+              Não Bloquear
             </Button>
             <Button
               type="button"
@@ -189,7 +146,7 @@ export const Settings = () => {
               size="sm"
               onClick={() => setAllConfigs(ConfigEnum.BLOCK_MEDIUM_AND_ABOVE)}
             >
-              Moderado para Todos
+              Bloquear Conteúdo de Médio Risco ou Mais
             </Button>
             <Button
               type="button"
@@ -198,7 +155,7 @@ export const Settings = () => {
               size="sm"
               onClick={() => setAllConfigs(ConfigEnum.BLOCK_ONLY_HIGH)}
             >
-              Alto para Todos
+              Bloquear Conteúdo de Alto Risco
             </Button>
           </div>
         </div>

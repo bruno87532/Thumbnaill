@@ -10,21 +10,23 @@ interface CanvasProps {
   selectedLayerId: string | null
   onSelectLayer: (id: string) => void
   onUpdateLayer: (id: string, updates: Partial<Layer>) => void
+  canvasDimensions: { width: number; height: number }
 }
 
 export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
-  ({ backgroundImage, layers, selectedLayerId, onSelectLayer, onUpdateLayer }, ref) => {
+  ({ backgroundImage, layers, selectedLayerId, onSelectLayer, onUpdateLayer, canvasDimensions }, ref) => {
     return (
       <div
         ref={ref}
         className="relative overflow-hidden rounded-lg border-2 border-border bg-white shadow-2xl"
-        style={{ width: 800, height: 600 }}
+        style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
       >
         {backgroundImage ? (
           <img
             src={backgroundImage || "/placeholder.svg"}
             alt="Background"
-            className="h-full w-full object-cover"
+            className="absolute inset-0"
+            style={{ width: canvasDimensions.width, height: canvasDimensions.height }}
             draggable={false}
           />
         ) : (

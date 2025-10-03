@@ -1,7 +1,8 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFile } from "@nestjs/common";
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, UsePipes, ValidationPipe } from "@nestjs/common";
 import { DescribeThumbnaillService } from "./describe-thumbnaill.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AuthGuard } from "@nestjs/passport";
+import { DescribeImageDto } from "./dto/describe-image.dto";
 
 @Controller("describe-thumbnaill")
 export class DescribeThumbnaillController {
@@ -18,8 +19,11 @@ export class DescribeThumbnaillController {
       else cb(new Error("Only images jpeg, jpg, png and webp are allowed"), false)
     }
   }))
-  async describeImage(@UploadedFile() image: Express.Multer.File,
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+  async describeImage(
+    @UploadedFile() image: Express.Multer.File,
+    @Body() data: DescribeImageDto
   ) {
-    return await this.describeImageService.describeImage(image)
+    return await this.describeImageService.describeImage(image, data)
   }
 }

@@ -54,7 +54,16 @@ export const useCreateText = () => {
     { value: "Cambria", label: "Cambria" },
     { value: "Consolas", label: "Consolas" },
     { value: "Rockwell", label: "Rockwell" },
+    { value: "Anton", label: "Anton" },
+    { value: "Bebas Neue", label: "Bebas Neue" },
+    { value: "Oswald", label: "Oswald" },
+    { value: "Montserrat", label: "Montserrat" },
+    { value: "Poppins", label: "Poppins" },
+    { value: "League Spartan", label: "League Spartan" },
+    { value: "Luckiest Guy", label: "Luckiest Guy" },
+    { value: "Lilita One", label: "Lilita One" },
   ]
+
 
   const [textLines, setTextLines] = useState<TextLine[]>([
     {
@@ -87,23 +96,34 @@ export const useCreateText = () => {
   const updatePreview = () => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
     let totalHeight = 0
     const lineHeights: number[] = []
+    let maxWidth = 0
 
     textLines.forEach((line) => {
+      const fontStyle = line.italic ? "italic" : "normal"
+      const fontWeight = line.bold ? 700 : line.fontWeight
+      ctx.font = `${fontStyle} ${fontWeight} ${line.fontSize}px ${line.oldFontFamily ?? line.fontFamily}`
+
+      const metrics = ctx.measureText(line.text)
+      const lineWidth = metrics.width
+      if (lineWidth > maxWidth) maxWidth = lineWidth
+
       const lineHeight = line.fontSize * 1.2
       lineHeights.push(lineHeight)
       totalHeight += lineHeight
     })
 
-    let currentY = (canvas.height - totalHeight) / 2
+    const padding = 40 
+    canvas.width = maxWidth + padding * 2
+    canvas.height = totalHeight + padding * 2
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    let currentY = padding
     textLines.forEach((line, index) => {
       const r = Number.parseInt(line.color.slice(1, 3), 16)
       const g = Number.parseInt(line.color.slice(3, 5), 16)
@@ -113,55 +133,21 @@ export const useCreateText = () => {
 
       const fontStyle = line.italic ? "italic" : "normal"
       const fontWeight = line.bold ? 700 : line.fontWeight
-      console.log(line.oldFontFamily)
       ctx.font = `${fontStyle} ${fontWeight} ${line.fontSize}px ${line.oldFontFamily ?? line.fontFamily}`
       ctx.textAlign = "center"
       ctx.textBaseline = "top"
 
-      currentY += lineHeights[index] / 2
       const textX = canvas.width / 2
       const textY = currentY
-
-      ctx.shadowOffsetX = line.shadowOffsetX
-      ctx.shadowOffsetY = line.shadowOffsetY
-      ctx.shadowBlur = line.shadowBlur
-      ctx.shadowColor = line.shadowColor
 
       if (line.strokeWidth > 0) {
         ctx.strokeStyle = line.strokeColor
         ctx.lineWidth = line.strokeWidth
         ctx.strokeText(line.text, textX, textY)
       }
-
       ctx.fillText(line.text, textX, textY)
 
-      ctx.shadowOffsetX = 0
-      ctx.shadowOffsetY = 0
-      ctx.shadowBlur = 0
-
-      if (line.underline) {
-        const metrics = ctx.measureText(line.text)
-        const underlineY = textY + line.fontSize
-        ctx.beginPath()
-        ctx.moveTo(textX - metrics.width / 2, underlineY)
-        ctx.lineTo(textX + metrics.width / 2, underlineY)
-        ctx.strokeStyle = ctx.fillStyle
-        ctx.lineWidth = Math.max(1, line.fontSize / 20)
-        ctx.stroke()
-      }
-
-      if (line.strikethrough) {
-        const metrics = ctx.measureText(line.text)
-        const strikeY = textY + line.fontSize / 2
-        ctx.beginPath()
-        ctx.moveTo(textX - metrics.width / 2, strikeY)
-        ctx.lineTo(textX + metrics.width / 2, strikeY)
-        ctx.strokeStyle = ctx.fillStyle
-        ctx.lineWidth = Math.max(1, line.fontSize / 20)
-        ctx.stroke()
-      }
-
-      currentY += lineHeights[index] / 2
+      currentY += lineHeights[index]
     })
   }
 

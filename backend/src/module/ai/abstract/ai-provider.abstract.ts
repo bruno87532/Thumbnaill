@@ -1,10 +1,11 @@
-import type { BaseMessage, MessageContent } from "@langchain/core/messages";
+import { Models } from "src/common/types/models";
 
 export abstract class AIProviderAbstract {
   abstract chatCompletionWithTemplate(
-    message: BaseMessage[],
+    systemPrompt: string,
+    userPrompt?: string,
     options?: {
-      model?: "gpt-4o-mini" | "gpt-4o";
+      model?: Models,
       temperature?: number;
     }
   ): Promise<{
@@ -15,7 +16,7 @@ export abstract class AIProviderAbstract {
     prompt: string,
     imageUrl: string,
     options?: {
-      model: "gpt-4o-mini" | "gpt-4o";
+      model: "gpt-5";
       temperature?: number;
     }
   ): Promise<{

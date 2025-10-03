@@ -51,7 +51,7 @@ export class ImageService {
   }
 
   static async deleteImageById(id: string) {
-    const response = await axios.delete(this.pathBackend + "/image/" + id, {
+    await axios.delete(this.pathBackend + "/image/" + id, {
       headers: {
         "Content-Type": "application/json"
       },

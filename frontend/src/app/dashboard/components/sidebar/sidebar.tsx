@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, User, LucideIcon, Pencil, Text, GalleryThumbnails, ImageIcon } from "lucide-react"
+import { Upload, Settings, Battery as Gallery, Home, Menu, Sparkles, History, LucideIcon, Pencil, Text, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Pages } from "@/common/types/pages"
 

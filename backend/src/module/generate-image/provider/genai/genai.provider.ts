@@ -1,7 +1,6 @@
 import { Injectable, Inject, InternalServerErrorException, HttpException, NotFoundException } from "@nestjs/common";
 import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold, Content, MediaResolution } from "@google/genai";
 import { GenerateImageProviderAbstract } from "../../abstract/generate-image-provider.abstract";
-import * as fs from "fs";
 
 @Injectable()
 export class GenaiProvider implements GenerateImageProviderAbstract {
@@ -24,18 +23,6 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
   }): Promise<{
     data: Buffer<ArrayBuffer>
   } | undefined> {
-    console.log({
-      parts: [
-        { text: data.prompt },
-        { text: data.aspectRatioText },
-        ...data.inlineData.map((img) => ({
-          inlineData: {
-            mimeType: img.mimeType,
-            data: img.data
-          }
-        }))
-      ],
-    })
     try {
       const response = await this.googleClient.models.generateContent({
         model: "gemini-2.5-flash-image-preview",
@@ -57,16 +44,16 @@ export class GenaiProvider implements GenerateImageProviderAbstract {
         config: {
           responseModalities: ["IMAGE", "TEXT"],
           safetySettings: [
-
             ...data.categories
           ],
           mediaResolution: data.mediaResolution,
         },
       });
       const candidate = response.candidates?.[0];
+      console.log(JSON.stringify(candidate, null, 2))
       if (!candidate) throw new NotFoundException("Candidate not found")
       const content = candidate.content;
-      if (!content?.parts || content?.parts.length === 0) throw new NotFoundException("Content not found")
+       if (!content?.parts || content?.parts.length === 0) throw new NotFoundException("Content not found")
 
       for (const part of content.parts) {
         if (part.text) {
